@@ -566,7 +566,7 @@ def on_pad_pressed(_, pad_n, pad_ij, velocity):
             pads_should_ignore_next_release_action[pad_n] = True
 
     # Save the current time the pad is pressed and clear any delayed execution timer that existed
-    # Also save velocity of the current pressing as it will be used when triggering the actual porcessed action when release action is triggered
+    # Also save velocity of the current pressing as it will be used when triggering the actual processed action when release action is triggered
     pads_last_pressed_veocity[pad_n] = velocity
     pads_pressing_log[pad_n].append(time.time())
     pads_pressing_log[pad_n] = pads_pressing_log[pad_n][
