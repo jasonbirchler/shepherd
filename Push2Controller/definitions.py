@@ -108,7 +108,7 @@ DEVICE_DEFINITION_FOLDER = os.path.join(BASE_DATA_DIR, 'device_definitions')
 os.makedirs(DEVICE_DEFINITION_FOLDER, exist_ok=True)
 FAVOURITE_PRESETS_FILE_PATH = os.path.join(BASE_DATA_DIR, 'favourite_presets.json')
 
-BUTTON_LONG_PRESS_TIME = 0.25
+BUTTON_LONG_PRESS_TIME = 0.5
 BUTTON_DOUBLE_PRESS_TIME = 0.2
 
 
