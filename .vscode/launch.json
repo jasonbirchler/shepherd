@@ -14,15 +14,25 @@
       "name": "Python Debug: Current File",
       "type": "debugpy",
       "request": "launch",
-      "program": "$(file}",
-      "console": "integratedTerminal"
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/Push2Controller",
+      "python": "${workspaceFolder}/Push2Controller/venv/bin/python",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/Push2Controller:${workspaceFolder}"
+      }
     },
     {
-      "name": "Python Debug: app.py",
+      "name": "Debug: Shephard Push2Controller",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/Push2Controller/app.py",
-      "args": ["-Xfrozen_modules", "off"]
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/Push2Controller",
+      "python": "${workspaceFolder}/Push2Controller/venv/bin/python",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/Push2Controller:${workspaceFolder}"
+      }
     }
   ]
 }
