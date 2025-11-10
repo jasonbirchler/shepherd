@@ -692,20 +692,22 @@ class ShepherdBackendInterface(StateSynchronizer):
                     property_name = update_data[2].lower()
                     new_value = update_data[3]
 
-                    if hasattr(tree_element, modified_prop_name(property_name)):
-                        old_value = getattr(tree_element, modified_prop_name(property_name), None)
-                        setattr(tree_element, modified_prop_name(property_name),
+                    mapped_prop_name = modified_prop_name(property_name)
+                    if mapped_prop_name and hasattr(tree_element, mapped_prop_name):
+                        old_value = getattr(tree_element, mapped_prop_name, None)
+                        setattr(tree_element, mapped_prop_name,
                                 backend_value_to_python_value(property_name, new_value))
                         app_notification_data = {
                             'updateType': update_type,
                             'affectedElement': tree_element,
-                            'propertyName': modified_prop_name(property_name),
+                            'propertyName': mapped_prop_name,
                             'oldValue': old_value,
                             'newValue': new_value,
                         }
                     else:
-                        raise Exception('Trying to update state value for an attribute that does not exist '
-                                        '({} of object {})'.format(property_name, tree_element.uuid))
+                        if self.verbose_level >= 1:
+                            print('WARNING: Unknown property {} for object {}, ignoring update'.format(property_name, tree_element.uuid))
+                        # Don't raise exception, just ignore unknown properties
                     # If we are trying to update an attribute that does not exist (or an element that does not exist),
                     # this will raise an error. This is to be expected as we should never get here trying to update
                     # an attribute/element that does not exist
