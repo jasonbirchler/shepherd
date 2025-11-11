@@ -113,7 +113,7 @@ class ClipEditgMode(definitions.ShepherdControllerMode):
 
     def adjust_pads_to_sequence(self):
         # Auto adjust pads_min_note_offset, etc
-        if self.clip.sequence_events:
+        if self.clip and self.clip.sequence_events:
             self.pads_min_note_offset = min([event.midi_note for event in self.clip.sequence_events if event.is_type_note()])
         else:
             self.pads_min_note_offset = 64
@@ -153,7 +153,7 @@ class ClipEditgMode(definitions.ShepherdControllerMode):
         notes_to_display = []
         for event in notes:
             duration = event.rendered_end_timestamp - event.rendered_start_timestamp
-            if duration < 0.0:
+            if duration < 0.0 and self.clip:
                 duration = duration + self.clip.clip_length_in_beats
             notes_to_display.append({
                 'pad_start_ij': (7 - (event.midi_note - self.pads_min_note_offset), 

@@ -117,7 +117,11 @@ class TrackSelectionMode(definitions.ShepherdControllerMode):
     def activate(self):
         self.update_buttons()
         self.update_pads()
-        self.select_track(self.selected_track)
+        # Only select track on initial activation, not on repeated calls
+        # This preserves manually set monitoring states
+        if not hasattr(self, '_activated'):
+            self.select_track(self.selected_track)
+            self._activated = True
 
     def deactivate(self):
         for button_name in self.track_button_names:
@@ -153,10 +157,7 @@ class TrackSelectionMode(definitions.ShepherdControllerMode):
             if track is not None:
                 if long_press:
                     # Toggle input monitoring
-                    if track.input_monitoring:
-                        track.set_input_monitoring(False)
-                    else:
-                        track.set_input_monitoring(True)
+                    track.set_input_monitoring(not track.input_monitoring)
                 else:
                     if not shift:
                         # If button shift not pressed, select the track
