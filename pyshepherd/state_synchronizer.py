@@ -31,6 +31,10 @@ def ws_on_message(ws, message):
     if ss_instance is not None:
         ss_instance.ws_connection_ok = True
 
+    # Ensure message is a string (decode if bytes)
+    if isinstance(message, bytes):
+        message = message.decode('utf-8')
+
     address = message[:message.find(':')]
     data = message[message.find(':') + 1:]
 
