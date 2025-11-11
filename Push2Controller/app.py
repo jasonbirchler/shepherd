@@ -505,6 +505,20 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
         if buttons_waiting_to_trigger_processed_action.get(button_name, False):
             buttons_should_ignore_next_release_action[button_name] = True
 
+    def send_pad_midi_to_monitored_tracks(self, note, velocity, note_on=True):
+        """Send MIDI note from Push pads to tracks with input monitoring enabled"""
+        if self.shepherd_interface.state is None:
+            return
+        
+        for track in self.session.tracks:
+            if track.input_monitoring:
+                hardware_device = track.get_output_hardware_device()
+                if hardware_device is not None:
+                    msg_type = 'note_on' if note_on else 'note_off'
+                    channel = hardware_device.midi_channel - 1  # Convert from 1-16 to 0-15
+                    msg = mido.Message(msg_type, channel=channel, note=note, velocity=velocity)
+                    hardware_device.send_midi(msg)
+
 
 # Bind push action handlers with class methods
 @push2_python.on_encoder_rotated()
@@ -531,6 +545,20 @@ pads_last_pressed_veocity = {}
 def on_pad_pressed(_, pad_n, pad_ij, velocity):
     if app.shepherd_interface.state is None: return
     global pads_pressing_log, pads_timers, pads_pressed_state, pads_should_ignore_next_release_action
+
+    # - Send MIDI to monitored tracks for melodic, rhythmic, or slice modes
+    active_pad_mode = None
+    if app.is_mode_active(app.melodic_mode):
+        active_pad_mode = app.melodic_mode
+    elif app.is_mode_active(app.rhyhtmic_mode):
+        active_pad_mode = app.rhyhtmic_mode
+    elif app.is_mode_active(app.slice_notes_mode):
+        active_pad_mode = app.slice_notes_mode
+    
+    if active_pad_mode is not None:
+        note = active_pad_mode.pad_ij_to_midi_note(pad_ij)
+        if note is not None:
+            app.send_pad_midi_to_monitored_tracks(note, velocity, note_on=True)
 
     # - Trigger raw pad pressed action
     try:
@@ -587,6 +615,20 @@ def on_pad_pressed(_, pad_n, pad_ij, velocity):
 def on_pad_released(_, pad_n, pad_ij, velocity):
     if app.shepherd_interface.state is None: return
     global pads_pressing_log, pads_timers, pads_pressed_state, pads_should_ignore_next_release_action
+
+    # - Send MIDI note off to monitored tracks for melodic, rhythmic, or slice modes
+    active_pad_mode = None
+    if app.is_mode_active(app.melodic_mode):
+        active_pad_mode = app.melodic_mode
+    elif app.is_mode_active(app.rhyhtmic_mode):
+        active_pad_mode = app.rhyhtmic_mode
+    elif app.is_mode_active(app.slice_notes_mode):
+        active_pad_mode = app.slice_notes_mode
+    
+    if active_pad_mode is not None:
+        note = active_pad_mode.pad_ij_to_midi_note(pad_ij)
+        if note is not None:
+            app.send_pad_midi_to_monitored_tracks(note, velocity, note_on=False)
 
     # - Trigger raw pad released action
     try:
@@ -840,7 +882,7 @@ def on_midi_connected(_):
 
 # Run app main loop
 if __name__ == "__main__":
-    app = ShepherdPush2ControllerApp(debugger_port=5100)
+    app = ShepherdPush2ControllerApp()
     if midi_connected_received_before_app:
         # App received the "on_midi_connected" call before it was initialized. Do it now!
         print('Missed MIDI initialization call, doing it now...')
