@@ -100,9 +100,9 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
     def on_full_state_received(self):
         if not self.modes_initialized:
             self.init_modes(self.load_settings_from_file())
-            self.pads_need_update = True  # Force pad update after modes are initialized
         else:
             self.active_modes_need_reactivate = True
+            self.pads_need_update = True  # Force pad update after modes are initialized
 
     def on_backend_connection_lost(self):
         # Set notes midi in to None as virtual midi device created by backend might have disappeared.
