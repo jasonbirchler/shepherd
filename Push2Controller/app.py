@@ -100,6 +100,7 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
     def on_full_state_received(self):
         if not self.modes_initialized:
             self.init_modes(self.load_settings_from_file())
+            self.pads_need_update = True  # Force pad update after modes are initialized
         else:
             self.active_modes_need_reactivate = True
 
@@ -365,10 +366,6 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
             # "ALSA lib seq_hw.c:466:(snd_seq_hw_open) open /dev/snd/seq failed: Cannot allocate memory" issues.
             # A work around is make the reconnection time bigger, but a better solution should probably be found.
             self.push.set_push2_reconnect_call_interval(2)
-
-        if self.push is not None:
-            print('update pads on Init')
-            self.update_push2_pads()
 
     def update_push2_pads(self):
         if self.shepherd_interface.state is None or not self.modes_initialized: return
