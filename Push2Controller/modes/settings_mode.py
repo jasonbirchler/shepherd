@@ -422,7 +422,7 @@ def run_sw_update(do_pip_install=True):
         os.system('pip3 install -r requirements.txt --no-cache')
     print('Building Shepherd backend')
     is_running_sw_update = 'Building'
-    os.system('cd /home/pi/shepherd/Shepherd/Builds/LinuxMakefile; git pull; make CONFIG=Release -j4;')
+    os.system('cd /home/patch/shepherd/Shepherd/Builds/LinuxMakefile; git pull; make CONFIG=Release -j4;')
     is_running_sw_update = 'Restarting'
     os.system('sudo systemctl restart shepherd')
     restart_apps()

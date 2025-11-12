@@ -32,7 +32,8 @@
       "python": "${workspaceFolder}/Push2Controller/venv/bin/python",
       "env": {
         "PYTHONPATH": "${workspaceFolder}/Push2Controller:${workspaceFolder}"
-      }
+      },
+      "args": ["-s"]
     }
   ]
 }
