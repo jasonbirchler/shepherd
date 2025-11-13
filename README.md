@@ -84,14 +84,14 @@ sudo apt-get install xvfb
 Then, you can compile using `make`:
 
 ```
-cd /home/pi/shepherd/Shepherd/Builds/LinuxMakefile
+cd ~/shepherd/Shepherd/Builds/LinuxMakefile
 make CONFIG=Release -j4
 ```
 
 Once compiled, you can run Shepherd backend like:
 
 ```
-cd /home/pi/shepherd/Shepherd/Builds/LinuxMakefil/build/
+cd ~/shepherd/Shepherd/Builds/LinuxMakefil/build/
 ./Shepherd
 ```
 
