@@ -35,7 +35,7 @@ TODO: add more general information about the backend, block diagram, description
 The first step, common to all platforms, clone repository (with submodules):
 
 ```
-git clone https://github.com/ffont/shepherd.git && cd shepherd && git submodule update --init
+git clone https://github.com/jasonbirchler/shepherd.git && cd shepherd && git submodule update --init
 ```
 
 #### macOS
