@@ -1,0 +1,6 @@
+{
+    "metronomeMidiDevice": "OUTPUT_MIDI_DEVICE_NAME",
+    "metronomeMidiChannel": "MIDI_DEVICE_CHANNEL_FROM_1_TO_16",
+    "midiDevicesToSendClockTo": ["OUTPUT_MIDI_DEVICE_NAME1", "OUTPUT_MIDI_DEVICE_NAME2"],
+    "pushClockDeviceName": "OUTPUT_MIDI_DEVICE_NAME"
+}
