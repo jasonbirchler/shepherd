@@ -1,0 +1,12 @@
+[Unit]
+Description=shepherd
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/patch/shepherd/
+ExecStart=xvfb-run -a /home/patch/shepherd/Shepherd/Builds/LinuxMakefile/build/Shepherd
+User=patch
+
+[Install]
+WantedBy=multi-user.target

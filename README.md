@@ -35,7 +35,7 @@ TODO: add more general information about the backend, block diagram, description
 The first step, common to all platforms, clone repository (with submodules):
 
 ```
-git clone https://github.com/ffont/shepherd.git && cd shepherd && git submodule update --init
+git clone https://github.com/jasonbirchler/shepherd.git && cd shepherd && git submodule update --init
 ```
 
 #### macOS
@@ -84,14 +84,14 @@ sudo apt-get install xvfb
 Then, you can compile using `make`:
 
 ```
-cd /home/pi/shepherd/Shepherd/Builds/LinuxMakefile
+cd ~/shepherd/Shepherd/Builds/LinuxMakefile
 make CONFIG=Release -j4
 ```
 
 Once compiled, you can run Shepherd backend like:
 
 ```
-cd /home/pi/shepherd/Shepherd/Builds/LinuxMakefil/build/
+cd ~/shepherd/Shepherd/Builds/LinuxMakefil/build/
 ./Shepherd
 ```
 
