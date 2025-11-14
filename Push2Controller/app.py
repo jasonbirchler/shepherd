@@ -102,6 +102,7 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
             self.init_modes(self.load_settings_from_file())
         else:
             self.active_modes_need_reactivate = True
+            self.pads_need_update = True  # Force pad update after modes are initialized
 
     def on_backend_connection_lost(self):
         # Set notes midi in to None as virtual midi device created by backend might have disappeared.
@@ -361,7 +362,7 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
                                        simulator_use_virtual_midi_out=self.using_push_simulator)
         if definitions.RUNNING_ON_RPI:
             # When this app runs in Linux is because it is running on the Raspberrypi
-            # I've overved problems trying to reconnect many times without success on the Raspberrypi, resulting in
+            # I've observed problems trying to reconnect many times without success on the Raspberrypi, resulting in
             # "ALSA lib seq_hw.c:466:(snd_seq_hw_open) open /dev/snd/seq failed: Cannot allocate memory" issues.
             # A work around is make the reconnection time bigger, but a better solution should probably be found.
             self.push.set_push2_reconnect_call_interval(2)

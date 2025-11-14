@@ -128,11 +128,17 @@ class TrackSelectionMode(definitions.ShepherdControllerMode):
             self.push.buttons.set_button_color(button_name, definitions.BLACK)
 
     def update_buttons(self):
+        if self.session is None or self.session.tracks is None:
+            # Schedule retry for when session becomes available
+            self.app.buttons_need_update = True
+            return
         for count, name in enumerate(self.track_button_names):
             color = self.get_track_color(self.session.tracks[count])
             self.push.buttons.set_button_color(name, color)
             
     def update_display(self, ctx, w, h):
+        if self.session is None or self.session.tracks is None:
+            return
         # Draw track selector labels
         height = 20
         for i in range(0, len(self.session.tracks)):
