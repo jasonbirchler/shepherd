@@ -1,0 +1,39 @@
+name: Backend Tests
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'Shepherd/**'
+      - '.github/workflows/backend-tests.yml'
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'Shepherd/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential g++
+    
+    - name: Run Backend Tests
+      run: |
+        cd Shepherd/Tests
+        bash run_all_tests.sh
+    
+    - name: Test Results
+      if: always()
+      run: |
+        if [ $? -eq 0 ]; then
+          echo "✅ All tests passed!"
+        else
+          echo "❌ Tests failed!"
+          exit 1
+        fi

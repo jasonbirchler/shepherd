@@ -1,0 +1,58 @@
+CXX = g++
+
+# Platform detection
+UNAME := $(shell uname)
+
+# JUCE flags
+JUCE_CPPFLAGS = -DDEBUG=1 -D_DEBUG=1 \
+	-DJUCE_DISPLAY_SPLASH_SCREEN=0 \
+	-DJUCE_MODULE_AVAILABLE_juce_core=1 \
+	-DJUCE_MODULE_AVAILABLE_juce_data_structures=1 \
+	-DJUCE_MODULE_AVAILABLE_juce_events=1 \
+	-DJUCE_MODULE_AVAILABLE_juce_audio_basics=1 \
+	-DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1 \
+	-DJUCE_STRICT_REFCOUNTEDPOINTER=1 \
+	-DJUCE_STANDALONE_APPLICATION=1
+
+# Platform-specific flags
+ifeq ($(UNAME),Darwin)
+	JUCE_CPPFLAGS += -DJUCE_MAC=1
+	LDFLAGS = -framework CoreFoundation -framework CoreAudio -framework CoreMidi \
+		-framework AudioToolbox -framework Accelerate
+else
+	JUCE_CPPFLAGS += -DLINUX=1
+	LDFLAGS = -latomic -lrt -ldl -lpthread
+endif
+
+# Include paths
+INCLUDES = -I../JuceLibraryCode \
+	-I../3rdParty/JUCE/modules \
+	-I../Source \
+	-I../Source/common \
+	-I.
+
+# Compiler flags
+CXXFLAGS = -std=c++17 -g -O0 $(JUCE_CPPFLAGS) $(INCLUDES)
+
+# Source files
+TEST_SOURCES = juce_test_main.cpp juce_test_musical_context.cpp
+SHEPHERD_SOURCES = ../Source/MusicalContext.cpp ../Source/HardwareDevice.cpp
+JUCE_SOURCES = ../JuceLibraryCode/include_juce_core.cpp \
+	../JuceLibraryCode/include_juce_data_structures.cpp \
+	../JuceLibraryCode/include_juce_events.cpp \
+	../JuceLibraryCode/include_juce_audio_basics.cpp
+
+TARGET = JuceTests
+
+all: $(TARGET)
+
+$(TARGET): $(TEST_SOURCES) $(SHEPHERD_SOURCES) $(JUCE_SOURCES)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(TEST_SOURCES) $(SHEPHERD_SOURCES) $(JUCE_SOURCES) $(LDFLAGS)
+
+test: $(TARGET)
+	./$(TARGET)
+
+clean:
+	rm -f $(TARGET)
+
+.PHONY: all test clean

@@ -25,6 +25,13 @@ make -f integration_makefile test
 INTEGRATION_RESULT=$?
 echo
 
+# Run minimal JUCE-like tests
+echo "4. Minimal JUCE-like Tests (Proof of Concept)"
+echo "----------------------------------------------"
+make -f minimal_juce_makefile test
+JUCE_RESULT=$?
+echo
+
 # Summary
 echo "Test Summary"
 echo "============"
@@ -46,8 +53,14 @@ else
     echo "❌ Integration Tests: FAILED"
 fi
 
+if [ $JUCE_RESULT -eq 0 ]; then
+    echo "✅ Minimal JUCE-like Tests: PASSED"
+else
+    echo "❌ Minimal JUCE-like Tests: FAILED"
+fi
+
 # Overall result
-TOTAL_FAILURES=$((SIMPLE_RESULT + MOCK_RESULT + INTEGRATION_RESULT))
+TOTAL_FAILURES=$((SIMPLE_RESULT + MOCK_RESULT + INTEGRATION_RESULT + JUCE_RESULT))
 if [ $TOTAL_FAILURES -eq 0 ]; then
     echo
     echo "🎉 All tests passed!"
