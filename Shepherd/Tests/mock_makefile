@@ -1,0 +1,16 @@
+CXX = g++
+CXXFLAGS = -std=c++17 -I.
+TARGET = MockTests
+
+all: $(TARGET)
+
+$(TARGET): mock_tests.cpp mocks.h
+	$(CXX) $(CXXFLAGS) -o $(TARGET) mock_tests.cpp
+
+test: $(TARGET)
+	./$(TARGET)
+
+clean:
+	rm -f $(TARGET)
+
+.PHONY: all test clean

@@ -1,0 +1,16 @@
+CXX = g++
+CXXFLAGS = -std=c++17 -I.
+TARGET = IntegrationTests
+
+all: $(TARGET)
+
+$(TARGET): integration_example.cpp mocks.h
+	$(CXX) $(CXXFLAGS) -o $(TARGET) integration_example.cpp
+
+test: $(TARGET)
+	./$(TARGET)
+
+clean:
+	rm -f $(TARGET)
+
+.PHONY: all test clean

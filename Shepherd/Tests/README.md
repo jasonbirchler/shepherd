@@ -28,8 +28,16 @@ This directory contains tests for the Shepherd backend application.
 cd Shepherd/Tests
 make -f simple_makefile test
 
+# Run mock framework tests
+make -f mock_makefile test
+
+# Run integration tests (using mocks)
+make -f integration_makefile test
+
 # Clean up
 make -f simple_makefile clean
+make -f mock_makefile clean
+make -f integration_makefile clean
 ```
 
 ## Test Categories
@@ -61,20 +69,31 @@ make -f simple_makefile clean
    - UUID handling
 
 3. **Integration Tests**
-   - MIDI message flow
-   - State synchronization
-   - WebSocket communication
+   - ✅ MIDI message flow (with mocks)
+   - ✅ State synchronization (with mocks)
+   - ✅ WebSocket communication (with mocks)
+
+### ✅ Mock Framework (Implemented)
+1. **Mock MIDI Devices**
+   - MockMidiDeviceManager for device management
+   - MockMidiMessage for MIDI data
+   - Message tracking and validation
+
+2. **Mock WebSocket Connections**
+   - MockWebSocketConnection for backend communication
+   - Message sending/receiving simulation
+   - Handler registration and testing
+
+3. **Mock Timing System**
+   - MockTimer for deterministic timing tests
+   - MockGlobalSettings for configuration
+   - Controllable time advancement
 
 ### 🔮 Future Phases
 1. **Performance Tests**
    - Real-time processing validation
    - Memory usage monitoring
    - Latency measurement
-
-2. **Mock Framework**
-   - Mock MIDI devices
-   - Mock WebSocket connections
-   - Simulated hardware
 
 ## Testing Strategy
 
@@ -134,6 +153,11 @@ Tests/
 ├── README.md                 # This file
 ├── simple_test.cpp          # Basic tests (no JUCE)
 ├── simple_makefile          # Build for simple tests
+├── mocks.h                  # Mock framework header
+├── mock_tests.cpp           # Mock framework tests
+├── mock_makefile            # Build for mock tests
+├── integration_example.cpp  # Integration test examples
+├── integration_makefile     # Build for integration tests
 ├── test_main.cpp            # JUCE-based test main (future)
 ├── test_musical_context.cpp # MusicalContext tests (future)
 ├── test_hardware_device.cpp # HardwareDevice tests (future)
