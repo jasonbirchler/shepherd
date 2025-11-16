@@ -1345,6 +1345,14 @@ void Sequencer::processMessageFromController (const juce::String action, juce::S
             if (device == nullptr) return;
             juce::String serializedMapping = parameters[1];  // 128 ints serialized into string, separated by comas
             device->setControlChangeMapping(serializedMapping);
+        } else if (action == ACTION_ADDRESS_DEVICE_SET_MIDI_CHANNEL){
+            jassert(parameters.size() == 2);
+            auto device = getHardwareDeviceByName(deviceName, HardwareDeviceType::output);
+            if (device == nullptr) return;
+            int newChannel = parameters[1].getIntValue();
+            if (newChannel >= 1 && newChannel <= 16) {
+                device->state.setProperty(ShepherdIDs::midiChannel, newChannel, nullptr);
+            }
         }
     
     } else if (action.startsWith(ACTION_ADDRESS_SCENE)) {
