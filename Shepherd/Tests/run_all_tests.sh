@@ -25,8 +25,15 @@ make -f integration_makefile test
 INTEGRATION_RESULT=$?
 echo
 
+# Run backend component tests
+echo "4. Backend Component Tests (Mock-based)"
+echo "---------------------------------------"
+make -f backend_component_makefile test
+COMPONENT_RESULT=$?
+echo
+
 # Run minimal JUCE-like tests
-echo "4. Minimal JUCE-like Tests (Proof of Concept)"
+echo "5. Minimal JUCE-like Tests (Proof of Concept)"
 echo "----------------------------------------------"
 make -f minimal_juce_makefile test
 JUCE_RESULT=$?
@@ -53,6 +60,12 @@ else
     echo "❌ Integration Tests: FAILED"
 fi
 
+if [ $COMPONENT_RESULT -eq 0 ]; then
+    echo "✅ Backend Component Tests: PASSED"
+else
+    echo "❌ Backend Component Tests: FAILED"
+fi
+
 if [ $JUCE_RESULT -eq 0 ]; then
     echo "✅ Minimal JUCE-like Tests: PASSED"
 else
@@ -60,7 +73,7 @@ else
 fi
 
 # Overall result
-TOTAL_FAILURES=$((SIMPLE_RESULT + MOCK_RESULT + INTEGRATION_RESULT + JUCE_RESULT))
+TOTAL_FAILURES=$((SIMPLE_RESULT + MOCK_RESULT + INTEGRATION_RESULT + COMPONENT_RESULT + JUCE_RESULT))
 if [ $TOTAL_FAILURES -eq 0 ]; then
     echo
     echo "🎉 All tests passed!"
