@@ -471,12 +471,18 @@ class SettingsMode(definitions.ShepherdControllerMode):
                 for track_idx in range(8):
                     current_state = self.track_selection_states.get(track_idx, 0)
                     self.track_selection_states[track_idx] = max(0, current_state - 1)
+                # Reset encoder accumulators when selection changes
+                for encoder_name in self.encoder_accumulators:
+                    self.encoder_accumulators[encoder_name] = 0
                 return True
             elif button_name == push2_python.constants.BUTTON_DOWN:
                 # Move selection down for all tracks  
                 for track_idx in range(8):
                     current_state = self.track_selection_states.get(track_idx, 0)
                     self.track_selection_states[track_idx] = min(1, current_state + 1)
+                # Reset encoder accumulators when selection changes
+                for encoder_name in self.encoder_accumulators:
+                    self.encoder_accumulators[encoder_name] = 0
                 return True
             
             buttons_row = [
