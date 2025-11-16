@@ -1,18 +1,18 @@
 name: Backend Tests
 
 on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'Shepherd/**'
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
     paths:
       - 'Shepherd/**'
       - '.github/workflows/backend-tests.yml'
-  push:
-    branches: [ main, master ]
-    paths:
-      - 'Shepherd/**'
 
 jobs:
-  test:
+  backend-test:
     runs-on: ubuntu-latest
     
     steps:
