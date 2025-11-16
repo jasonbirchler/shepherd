@@ -1,0 +1,16 @@
+CXX = g++
+CXXFLAGS = -std=c++17
+TARGET = SimpleTests
+
+all: $(TARGET)
+
+$(TARGET): simple_test.cpp
+	$(CXX) $(CXXFLAGS) -o $(TARGET) simple_test.cpp
+
+test: $(TARGET)
+	./$(TARGET)
+
+clean:
+	rm -f $(TARGET)
+
+.PHONY: all test clean
