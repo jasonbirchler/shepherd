@@ -38,6 +38,7 @@ class SettingsMode(definitions.ShepherdControllerMode):
 
     current_preset_save_number = 0
     current_preset_load_number = 0
+    encoder_accumulators = {}  # encoder_name: accumulated_value
 
     buttons_used = [
         push2_python.constants.BUTTON_UPPER_ROW_1,
@@ -64,6 +65,9 @@ class SettingsMode(definitions.ShepherdControllerMode):
             self.encoders_state[encoder_name] = {
                 'last_message_received': current_time,
             }
+        # Initialize encoder accumulators
+        for encoder_name in self.push.encoders.available_names:
+            self.encoder_accumulators[encoder_name] = 0
 
     def activate(self):
         self.update_buttons()
@@ -308,6 +312,13 @@ class SettingsMode(definitions.ShepherdControllerMode):
                     current_hw_device_index = -1
                 next_device_name = available_devices[(current_hw_device_index + increment) % len(available_devices)]
                 track.set_output_hardware_device(next_device_name)
+                # Apply encoder threshold for device/channel selection
+                threshold = 3
+                self.encoder_accumulators[encoder_name] += increment
+                
+                if abs(self.encoder_accumulators[encoder_name]) >= threshold:
+                    actual_increment = 1 if self.encoder_accumulators[encoder_name] > 0 else -1
+                    self.encoder_accumulators[encoder_name] = 0  # Reset accumulator
             except Exception as e:
                 print(e)
             return True
