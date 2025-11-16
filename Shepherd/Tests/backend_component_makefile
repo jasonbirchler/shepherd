@@ -1,0 +1,17 @@
+CXX = g++
+CXXFLAGS = -std=c++17 -I.
+TARGET = BackendComponentTests
+
+all: $(TARGET)
+
+$(TARGET): backend_component_tests.cpp mocks.h
+	$(CXX) $(CXXFLAGS) -o $(TARGET) backend_component_tests.cpp
+
+test: $(TARGET)
+	@echo "Running $(TARGET)..."
+	@./$(TARGET) || exit 1
+
+clean:
+	rm -f $(TARGET)
+
+.PHONY: all test clean

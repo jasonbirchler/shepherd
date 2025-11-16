@@ -16,13 +16,19 @@ This directory contains tests for the Shepherd backend application.
 - **Coverage**: Basic math operations, MIDI validation, string utilities
 - **Run**: `make -f simple_makefile test`
 
-### 2. JUCE-like Tests (`minimal_juce_test.cpp`)
+### 2. Backend Component Tests (`backend_component_tests.cpp`)
+- **Purpose**: Test core backend components using mocks
+- **Coverage**: MusicalContext, Track, Session coordination, Hardware device management
+- **Run**: `make -f backend_component_makefile test`
+- **Status**: ✅ 6 comprehensive component tests
+
+### 3. JUCE-like Tests (`minimal_juce_test.cpp`)
 - **Purpose**: Demonstrate JUCE-style testing concepts
 - **Coverage**: ValueTree-like operations, String handling
 - **Run**: `make -f minimal_juce_makefile test`
 - **Status**: ✅ Working proof of concept
 
-### 3. JUCE-based Tests (Future)
+### 4. JUCE-based Tests (Future)
 - **Purpose**: Test actual JUCE-dependent components
 - **Coverage**: Real MusicalContext, HardwareDevice, ValueTree operations
 - **Status**: Complex due to JUCE build dependencies
@@ -40,6 +46,9 @@ make -f mock_makefile test
 # Run integration tests (using mocks)
 make -f integration_makefile test
 
+# Run backend component tests (using mocks)
+make -f backend_component_makefile test
+
 # Run minimal JUCE-like tests
 make -f minimal_juce_makefile test
 
@@ -50,6 +59,7 @@ bash run_all_tests.sh
 make -f simple_makefile clean
 make -f mock_makefile clean
 make -f integration_makefile clean
+make -f backend_component_makefile clean
 make -f minimal_juce_makefile clean
 ```
 
