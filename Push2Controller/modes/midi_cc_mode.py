@@ -70,7 +70,7 @@ class MIDICCMode(ShepherdControllerMode):
                 self.device_midi_control_ccs[device_short_name] = []
                 for section in midi_cc:
                     section_name = section['section']
-                    for name, cc_number in section['controls']:
+                    for name, cc_number in section['controls'].items():
                         control = MIDICCControl(cc_number, name, section_name, self.get_current_track_color_helper)
                         if section.get('control_value_label_maps', {}).get(name, False):
                             control.value_labels_map = section['control_value_label_maps'][name]
