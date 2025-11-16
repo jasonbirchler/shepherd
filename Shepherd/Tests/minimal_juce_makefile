@@ -1,0 +1,17 @@
+CXX = g++
+CXXFLAGS = -std=c++17 -g -O0
+TARGET = MinimalJuceTests
+
+all: $(TARGET)
+
+$(TARGET): minimal_juce_test.cpp
+	$(CXX) $(CXXFLAGS) -o $(TARGET) minimal_juce_test.cpp
+
+test: $(TARGET)
+	@echo "Running $(TARGET)..."
+	@./$(TARGET) || exit 1
+
+clean:
+	rm -f $(TARGET)
+
+.PHONY: all test clean
