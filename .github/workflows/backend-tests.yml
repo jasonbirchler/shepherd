@@ -26,6 +26,7 @@ jobs:
     - name: Run Backend Tests
       run: |
         cd Shepherd/Tests
+        chmod +x run_all_tests.sh
         bash run_all_tests.sh
     
     - name: Test Results

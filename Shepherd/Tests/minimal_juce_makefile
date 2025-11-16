@@ -8,7 +8,8 @@ $(TARGET): minimal_juce_test.cpp
 	$(CXX) $(CXXFLAGS) -o $(TARGET) minimal_juce_test.cpp
 
 test: $(TARGET)
-	./$(TARGET)
+	@echo "Running $(TARGET)..."
+	@./$(TARGET) || exit 1
 
 clean:
 	rm -f $(TARGET)

@@ -3,6 +3,7 @@
 #include <string>
 #include <functional>
 #include <map>
+#include <cstdint>
 
 // Mock MIDI Message
 struct MockMidiMessage {

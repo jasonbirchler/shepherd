@@ -8,7 +8,8 @@ $(TARGET): mock_tests.cpp mocks.h
 	$(CXX) $(CXXFLAGS) -o $(TARGET) mock_tests.cpp
 
 test: $(TARGET)
-	./$(TARGET)
+	@echo "Running $(TARGET)..."
+	@./$(TARGET) || exit 1
 
 clean:
 	rm -f $(TARGET)

@@ -8,7 +8,8 @@ $(TARGET): simple_test.cpp
 	$(CXX) $(CXXFLAGS) -o $(TARGET) simple_test.cpp
 
 test: $(TARGET)
-	./$(TARGET)
+	@echo "Running $(TARGET)..."
+	@./$(TARGET) || exit 1
 
 clean:
 	rm -f $(TARGET)
