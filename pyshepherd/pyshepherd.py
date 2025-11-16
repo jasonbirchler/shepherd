@@ -639,6 +639,9 @@ class HardwareDevice(BaseShepherdClass):
 
     def set_control_change_mapping(self, mapping):
         self._send_msg_to_app('/device/setCCMapping', [self.name, ",".join([str(item) for item in mapping])])
+    
+    def set_midi_channel(self, channel):
+        self._send_msg_to_app('/device/setMidiChannel', [self.name, channel])
 
 
 class ShepherdBackendInterface(StateSynchronizer):

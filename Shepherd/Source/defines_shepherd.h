@@ -60,6 +60,7 @@
 #define ACTION_ADDRESS_DEVICE_SEND_MIDI "/device/sendMidi"
 #define ACTION_ADDRESS_DEVICE_SET_NOTES_MAPPING "/device/setNotesMapping"
 #define ACTION_ADDRESS_DEVICE_SET_CC_MAPPING "/device/setCCMapping"
+#define ACTION_ADDRESS_DEVICE_SET_MIDI_CHANNEL "/device/setMidiChannel"
 
 #define ACTION_ADDRESS_SCENE "/scene"
 #define ACTION_ADDRESS_SCENE_DUPLICATE "/scene/duplicate"

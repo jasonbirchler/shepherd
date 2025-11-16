@@ -38,6 +38,10 @@ class SettingsMode(definitions.ShepherdControllerMode):
 
     current_preset_save_number = 0
     current_preset_load_number = 0
+    
+    # Track selection state for hardware devices page
+    track_selection_states = {}  # track_idx: 0=device, 1=channel
+    encoder_accumulators = {}  # encoder_name: accumulated_value
 
     buttons_used = [
         push2_python.constants.BUTTON_UPPER_ROW_1,
@@ -64,6 +68,12 @@ class SettingsMode(definitions.ShepherdControllerMode):
             self.encoders_state[encoder_name] = {
                 'last_message_received': current_time,
             }
+        # Initialize track selection states (0=device, 1=channel)
+        for i in range(8):
+            self.track_selection_states[i] = 0
+        # Initialize encoder accumulators
+        for encoder_name in self.push.encoders.available_names:
+            self.encoder_accumulators[encoder_name] = 0
 
     def activate(self):
         self.update_buttons()
@@ -209,7 +219,61 @@ class SettingsMode(definitions.ShepherdControllerMode):
                 try:
                     track = self.session.tracks[i]
                     show_title(ctx, part_x, h, 'TRACK {}'.format(i+1))
-                    show_value(ctx, part_x, h, track.output_hardware_device_name if len(track.output_hardware_device_name) < 12 else '...{}'.format(track.output_hardware_device_name[-9:]), color)
+                    
+                    # Get device info
+                    device_name = track.output_hardware_device_name
+                    device_short_name = device_name if len(device_name) < 12 else '...{}'.format(device_name[-9:])
+                    
+                    # Get MIDI channel
+                    hw_device = track.get_output_hardware_device()
+                    midi_channel = hw_device.midi_channel if hw_device else 1
+                    
+                    # Get selection state for this track
+                    selection_state = self.track_selection_states.get(i, 0)
+                    
+                    # Draw device name
+                    device_y = part_h // 2 - 15
+                    if selection_state == 0:  # Device selected
+                        # Draw selection rectangle
+                        ctx.set_source_rgb(1.0, 1.0, 1.0)  # White background
+                        ctx.rectangle(part_x + 2, device_y - 2, part_w - 6, 16)
+                        ctx.fill()
+                        # Draw text in black (reverse)
+                        ctx.set_source_rgb(0.0, 0.0, 0.0)
+                        ctx.select_font_face("Arial", 0, 0)
+                        ctx.set_font_size(12)
+                        ctx.move_to(part_x + 4, device_y + 10)
+                        ctx.show_text(device_short_name)
+                    else:
+                        # Normal text
+                        ctx.set_source_rgb(*color)
+                        ctx.select_font_face("Arial", 0, 0)
+                        ctx.set_font_size(12)
+                        ctx.move_to(part_x + 4, device_y + 10)
+                        ctx.show_text(device_short_name)
+                    
+                    # Draw channel
+                    channel_y = part_h // 2 + 5
+                    channel_text = f"Ch {midi_channel}"
+                    if selection_state == 1:  # Channel selected
+                        # Draw selection rectangle
+                        ctx.set_source_rgb(1.0, 1.0, 1.0)  # White background
+                        ctx.rectangle(part_x + 2, channel_y - 2, part_w - 6, 16)
+                        ctx.fill()
+                        # Draw text in black (reverse)
+                        ctx.set_source_rgb(0.0, 0.0, 0.0)
+                        ctx.select_font_face("Arial", 0, 0)
+                        ctx.set_font_size(12)
+                        ctx.move_to(part_x + 4, channel_y + 10)
+                        ctx.show_text(channel_text)
+                    else:
+                        # Normal text
+                        ctx.set_source_rgb(*color)
+                        ctx.select_font_face("Arial", 0, 0)
+                        ctx.set_font_size(12)
+                        ctx.move_to(part_x + 4, channel_y + 10)
+                        ctx.show_text(channel_text)
+                        
                 except:
                     pass
 
@@ -300,14 +364,35 @@ class SettingsMode(definitions.ShepherdControllerMode):
             track_num = track_encoders.index(encoder_name)
             try:
                 track = self.session.tracks[track_num]
-                available_devices = self.state.get_available_output_hardware_device_names()
-                current_hw_device = track.output_hardware_device_name
-                if current_hw_device in available_devices:
-                    current_hw_device_index = available_devices.index(current_hw_device)
-                else:
-                    current_hw_device_index = -1
-                next_device_name = available_devices[(current_hw_device_index + increment) % len(available_devices)]
-                track.set_output_hardware_device(next_device_name)
+                selection_state = self.track_selection_states.get(track_num, 0)
+                
+                # Apply encoder threshold for device/channel selection
+                threshold = 3
+                self.encoder_accumulators[encoder_name] += increment
+                
+                if abs(self.encoder_accumulators[encoder_name]) >= threshold:
+                    actual_increment = 1 if self.encoder_accumulators[encoder_name] > 0 else -1
+                    self.encoder_accumulators[encoder_name] = 0  # Reset accumulator
+                    
+                    if selection_state == 0:  # Device selection only
+                        available_devices = self.state.get_available_output_hardware_device_names()
+                        current_hw_device_name = track.output_hardware_device_name
+                        if current_hw_device_name in available_devices:
+                            current_hw_device_index = available_devices.index(current_hw_device_name)
+                        else:
+                            current_hw_device_index = -1
+                        next_device_name = available_devices[(current_hw_device_index + actual_increment) % len(available_devices)]
+                        track.set_output_hardware_device(next_device_name)
+                        
+                    elif selection_state == 1:  # Channel selection only
+                        hw_device = track.get_output_hardware_device()
+                        if hw_device:
+                            current_channel = hw_device.midi_channel
+                            new_channel = current_channel + actual_increment
+                            # Clamp to valid MIDI channel range (1-16)
+                            new_channel = max(1, min(16, new_channel))
+                            self.set_device_midi_channel(hw_device.name, new_channel)
+                        
             except Exception as e:
                 print(e)
             return True
@@ -380,6 +465,26 @@ class SettingsMode(definitions.ShepherdControllerMode):
                 return True
 
         elif self.current_page == 3:  # HW devices
+            # Handle up/down arrow navigation
+            if button_name == push2_python.constants.BUTTON_UP:
+                # Move selection up for all tracks
+                for track_idx in range(8):
+                    current_state = self.track_selection_states.get(track_idx, 0)
+                    self.track_selection_states[track_idx] = max(0, current_state - 1)
+                # Reset encoder accumulators when selection changes
+                for encoder_name in self.encoder_accumulators:
+                    self.encoder_accumulators[encoder_name] = 0
+                return True
+            elif button_name == push2_python.constants.BUTTON_DOWN:
+                # Move selection down for all tracks  
+                for track_idx in range(8):
+                    current_state = self.track_selection_states.get(track_idx, 0)
+                    self.track_selection_states[track_idx] = min(1, current_state + 1)
+                # Reset encoder accumulators when selection changes
+                for encoder_name in self.encoder_accumulators:
+                    self.encoder_accumulators[encoder_name] = 0
+                return True
+            
             buttons_row = [
                 push2_python.constants.BUTTON_UPPER_ROW_1,
                 push2_python.constants.BUTTON_UPPER_ROW_2,
@@ -394,14 +499,31 @@ class SettingsMode(definitions.ShepherdControllerMode):
                 track_num = buttons_row.index(button_name)
                 try:
                     track = self.session.tracks[track_num]
-                    available_devices = self.state.get_available_output_hardware_device_names()
-                    current_hw_device = track.output_hardware_device_name
-                    current_hw_device_index = available_devices.index(current_hw_device)
-                    next_device_name = available_devices[current_hw_device_index + 1 % len(available_devices)]
-                    track.set_output_hardware_device(next_device_name)
+                    selection_state = self.track_selection_states.get(track_num, 0)
+                    
+                    if selection_state == 0:  # Device selection only
+                        available_devices = self.state.get_available_output_hardware_device_names()
+                        current_hw_device_name = track.output_hardware_device_name
+                        current_hw_device_index = available_devices.index(current_hw_device_name)
+                        next_device_name = available_devices[(current_hw_device_index + 1) % len(available_devices)]
+                        track.set_output_hardware_device(next_device_name)
+                    elif selection_state == 1:  # Channel selection only
+                        hw_device = track.get_output_hardware_device()
+                        if hw_device:
+                            current_channel = hw_device.midi_channel
+                            new_channel = (current_channel % 16) + 1  # Cycle 1-16
+                            self.set_device_midi_channel(hw_device.name, new_channel)
+                            
                 except Exception as e:
                     print(e)
                 return True
+
+
+    def set_device_midi_channel(self, device_name, new_channel):
+        """Send message to backend to change device MIDI channel"""
+        device = self.state.get_output_hardware_device_by_name(device_name)
+        if device:
+            device.set_midi_channel(new_channel)
 
 
 def restart_apps():
