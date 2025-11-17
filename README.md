@@ -247,9 +247,6 @@ Push2Controller uses [`pycairo`](https://github.com/pygobject/pycairo) Python pa
 need to install [`cairo`](https://www.cairographics.org/) if `pip install -r requirements.txt` does not do it for 
 you (see [this page](https://pycairo.readthedocs.io/en/latest/getting_started.html) for info on that).
 
-**NOTE**: if running Push2Controller in macOS, there seem to be compatibility issues with Python versions other than
-3.8 so please use that Python version :).
-
 Here are some screenshots of Push2Controller and Shepherd running using a real Push2 device:
 
 <p align="center">
