@@ -1,0 +1,83 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+      push2controller: ${{ steps.changes.outputs.push2controller }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dorny/paths-filter@v2
+      id: changes
+      with:
+        filters: |
+          backend:
+            - 'Shepherd/**'
+          push2controller:
+            - 'Push2Controller/**'
+
+  backend-tests:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential g++
+    - name: Run Backend Tests
+      run: |
+        cd Shepherd/Tests
+        chmod +x run_all_tests.sh
+        bash run_all_tests.sh
+
+  push2controller-tests:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.push2controller == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libcairo2-dev pkg-config python3-dev
+    - name: Install Python dependencies
+      run: |
+        cd Push2Controller
+        pip install -r requirements.txt
+        pip install -r tests/test_requirements.txt
+    - name: Run Push2Controller Tests
+      run: |
+        cd Push2Controller
+        python tests/run_tests.py
+
+  tests-complete:
+    needs: [detect-changes, backend-tests, push2controller-tests]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check test results
+      run: |
+        if [[ "${{ needs.backend-tests.result }}" == "failure" || "${{ needs.push2controller-tests.result }}" == "failure" ]]; then
+          echo "❌ Tests failed!"
+          exit 1
+        elif [[ "${{ needs.backend-tests.result }}" == "skipped" && "${{ needs.push2controller-tests.result }}" == "skipped" ]]; then
+          echo "✅ No tests needed - no relevant changes detected"
+        else
+          echo "✅ All relevant tests passed!"
+        fi
