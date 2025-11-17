@@ -5,6 +5,7 @@ This directory contains tests for the Shepherd backend application.
 ## Current Status
 
 ✅ **Basic Testing Framework** - Implemented and working
+
 - Simple C++ test framework without JUCE dependencies
 - Basic tests for core logic validation
 - Makefile-based build system
@@ -12,23 +13,27 @@ This directory contains tests for the Shepherd backend application.
 ## Test Structure
 
 ### 1. Simple Tests (`simple_test.cpp`)
+
 - **Purpose**: Test core logic without JUCE dependencies
 - **Coverage**: Basic math operations, MIDI validation, string utilities
 - **Run**: `make -f simple_makefile test`
 
 ### 2. Backend Component Tests (`backend_component_tests.cpp`)
+
 - **Purpose**: Test core backend components using mocks
 - **Coverage**: MusicalContext, Track, Session coordination, Hardware device management
 - **Run**: `make -f backend_component_makefile test`
 - **Status**: ✅ 6 comprehensive component tests
 
 ### 3. JUCE-like Tests (`minimal_juce_test.cpp`)
+
 - **Purpose**: Demonstrate JUCE-style testing concepts
 - **Coverage**: ValueTree-like operations, String handling
 - **Run**: `make -f minimal_juce_makefile test`
 - **Status**: ✅ Working proof of concept
 
 ### 4. JUCE-based Tests (Future)
+
 - **Purpose**: Test actual JUCE-dependent components
 - **Coverage**: Real MusicalContext, HardwareDevice, ValueTree operations
 - **Status**: Complex due to JUCE build dependencies
@@ -66,6 +71,7 @@ make -f minimal_juce_makefile clean
 ## Test Categories
 
 ### ✅ Implemented
+
 1. **Basic Math Operations**
    - BPM to sample rate conversions
    - Timing calculations
@@ -79,6 +85,7 @@ make -f minimal_juce_makefile clean
    - Short name generation
 
 ### 🚧 Planned (Next Phase)
+
 1. **MusicalContext Tests**
    - BPM/meter setting and getting
    - Playhead position management
@@ -97,6 +104,7 @@ make -f minimal_juce_makefile clean
    - ✅ WebSocket communication (with mocks)
 
 ### ✅ Mock Framework (Implemented)
+
 1. **Mock MIDI Devices**
    - MockMidiDeviceManager for device management
    - MockMidiMessage for MIDI data
@@ -113,6 +121,7 @@ make -f minimal_juce_makefile clean
    - Controllable time advancement
 
 ### 🔮 Future Phases
+
 1. **Performance Tests**
    - Real-time processing validation
    - Memory usage monitoring
@@ -121,21 +130,25 @@ make -f minimal_juce_makefile clean
 ## Testing Strategy
 
 ### Phase 1: Foundation (Current)
+
 - ✅ Basic test framework
 - ✅ Core logic validation
 - ✅ Build system setup
 
 ### Phase 2: Core Components
+
 - JUCE integration for ValueTree testing
 - MusicalContext comprehensive tests
 - HardwareDevice functionality tests
 
 ### Phase 3: Integration
+
 - End-to-end MIDI flow testing
 - WebSocket message handling
 - State management validation
 
 ### Phase 4: Advanced
+
 - Performance benchmarking
 - Memory leak detection
 - Real-time constraint validation
@@ -171,7 +184,7 @@ make -f minimal_juce_makefile clean
 
 ## File Structure
 
-```
+```text
 Tests/
 ├── README.md                 # This file
 ├── simple_test.cpp          # Basic tests (no JUCE)

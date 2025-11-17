@@ -87,6 +87,8 @@ class SettingsMode(definitions.ShepherdControllerMode):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, definitions.BLACK)
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_7, definitions.BLACK)
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, definitions.BLACK)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UP, definitions.BLACK)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_DOWN, definitions.BLACK)
 
     def update_buttons(self):
         if self.current_page == 1:  # Performance settings
@@ -128,6 +130,8 @@ class SettingsMode(definitions.ShepherdControllerMode):
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, definitions.WHITE)
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_7, definitions.WHITE)
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, definitions.WHITE)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UP, definitions.WHITE)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_DOWN, definitions.WHITE)
         
     def update_display(self, ctx, w, h):
         # Divide display in 8 parts to show different settings
