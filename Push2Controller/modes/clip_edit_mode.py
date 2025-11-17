@@ -10,7 +10,7 @@ import pyshepherd.pyshepherd
 from .generator_algorithms import RandomGeneratorAlgorithm, RandomGeneratorAlgorithmPlus
 
 
-class ClipEditgMode(definitions.ShepherdControllerMode):
+class ClipEditMode(definitions.ShepherdControllerMode):
 
     xor_group = 'pads'
     buttons_used = [
