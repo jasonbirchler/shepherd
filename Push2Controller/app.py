@@ -17,7 +17,7 @@ from collections import defaultdict
 from modes.melodic_mode import MelodicMode
 from modes.track_selection_mode import TrackSelectionMode
 from modes.clip_triggering_mode import ClipTriggeringMode
-from modes.clip_edit_mode import ClipEditgMode
+from modes.clip_edit_mode import ClipEditMode
 from modes.rhythmic_mode import RhythmicMode
 from modes.slice_notes_mode import SliceNotesMode
 from modes.settings_mode import SettingsMode
@@ -144,7 +144,7 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
 
         self.track_selection_mode = TrackSelectionMode(self, settings=settings)
         self.clip_triggering_mode = ClipTriggeringMode(self, settings=settings)
-        self.clip_edit_mode = ClipEditgMode(self, settings=settings)
+        self.clip_edit_mode = ClipEditMode(self, settings=settings)
         self.preset_selection_mode = PresetSelectionMode(self, settings=settings)
         self.midi_cc_mode = MIDICCMode(self,
                                        settings=settings)  # Must be initialized after track selection mode so it gets info about loaded tracks
