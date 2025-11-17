@@ -34,6 +34,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         cd Push2Controller
+        pip install -r requirements.txt
         pip install -r tests/test_requirements.txt
     
     - name: Run Push2Controller Tests
