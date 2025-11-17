@@ -43,7 +43,7 @@ class SettingsMode(definitions.ShepherdControllerMode):
     # Hardware devices panel
     # configure output hw device per track
 
-    current_page = Pages.PERFORMANCE # the page to start on
+    current_page = 0
     n_pages = len(Pages)
     encoders_state = {}
 
@@ -417,6 +417,13 @@ class SettingsMode(definitions.ShepherdControllerMode):
         return True  # Always return True because encoder should not be used in any other mode if this is first active
 
     def on_button_pressed(self, button_name, shift=False, select=False, long_press=False, double_press=False):
+        if button_name == push2_python.constants.BUTTON_SETUP and long_press:
+            # Exit settings mode
+            # set current_page to the length of Pages
+            # this tells toggle_and_rotate_settings_mode to exit settings
+            self.current_page = len(Pages)
+            self.app.toggle_and_rotate_settings_mode()
+            return True
         if self.current_page == Pages.PERFORMANCE:
             if button_name == push2_python.constants.BUTTON_UPPER_ROW_1:
                 self.app.melodic_mode.set_root_midi_note(self.app.melodic_mode.root_midi_note + 1)
