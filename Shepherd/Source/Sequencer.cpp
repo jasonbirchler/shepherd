@@ -1469,7 +1469,7 @@ void Sequencer::processMessageFromController (const juce::String action, juce::S
                     shouldToggleIsPlaying = true;
                 }
             }
-            DBG("shouldToggleIsPlaying set to: " << shouldToggleIsPlaying);
+            DBG("shouldToggleIsPlaying set to: " << (shouldToggleIsPlaying ? "true" : "false"));
             
             // Original logic preserved
             if (musicalContext && musicalContext->playheadIsPlaying()){
