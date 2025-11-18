@@ -150,6 +150,7 @@ private:
     // Aux MIDI buffers
     // We call .ensure_size for these buffers to make sure we don't to allocations in the RT thread
     juce::MidiBuffer midiClockMessages;
+    juce::MidiBuffer midiTransportMessages;
     juce::MidiBuffer midiMetronomeMessages;
     juce::MidiBuffer pushMidiClockMessages;
     juce::MidiBuffer monitoringNotesMidiBuffer;
@@ -179,6 +180,7 @@ private:
     int metronomeMidiChannel = 0;
     juce::String sendMetronomeMidiDeviceName = "";
     std::vector<juce::String> sendMidiClockMidiDeviceNames = {};
+    std::vector<juce::String> sendMidiTransportMidiDeviceNames = {};
     std::vector<juce::String> sendPushMidiClockDeviceNames = {};
 
     // Tracks

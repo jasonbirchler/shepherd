@@ -1,0 +1,25 @@
+CXX = g++
+CXXFLAGS = -std=c++17 -Wall -Wextra -O2
+
+# Target executable
+TARGET = midi_transport_tests
+
+# Source files
+SOURCES = midi_transport_tests.cpp
+
+# Header dependencies
+HEADERS = mocks.h
+
+# Build rule
+$(TARGET): $(SOURCES) $(HEADERS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SOURCES)
+
+# Clean rule
+clean:
+	rm -f $(TARGET)
+
+# Run tests
+test: $(TARGET)
+	./$(TARGET)
+
+.PHONY: clean test
