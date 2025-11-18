@@ -129,8 +129,8 @@ void HardwareDevice::addMidiMessageToRenderInBufferFifo(juce::MidiMessage msg)
     midiMessagesToRenderInBuffer.push(msg);
     
     if (midiMessagesToRenderInBuffer.getAvailableSpace() < 10){
-        DBG("WARNING, midi messages fifo for hardware device " << getName() << " getting close to full or full");
-        DBG("- Available space: " << midiMessagesToRenderInBuffer.getAvailableSpace() << ", available for reading: " << midiMessagesToRenderInBuffer.getNumAvailableForReading());
+        DBG("WARNING, midi messages fifo for hardware device " + getName() + " getting close to full or full");
+        DBG("- Available space: " + juce::String(midiMessagesToRenderInBuffer.getAvailableSpace()) + ", available for reading: " + juce::String(midiMessagesToRenderInBuffer.getNumAvailableForReading()));
     }
 }
 

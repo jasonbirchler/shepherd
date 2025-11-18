@@ -780,8 +780,8 @@ void Clip::processSlice(juce::MidiBuffer& incommingBuffer, juce::MidiBuffer* buf
                         recordedMidiMessages.push(msg);
                         
                         if (recordedMidiMessages.getAvailableSpace() < 10){
-                            DBG("WARNING, recording fifo for clip " << getName() << " getting close to full or full");
-                            DBG("- Available space: " << clipSequenceObjectsFifo.getAvailableSpace() << ", available for reading: " << clipSequenceObjectsFifo.getNumAvailableForReading());
+                            DBG("WARNING, recording fifo for clip " + getName() + " getting close to full or full");
+                            DBG("- Available space: " + juce::String(clipSequenceObjectsFifo.getAvailableSpace()) + ", available for reading: " + juce::String(clipSequenceObjectsFifo.getNumAvailableForReading()));
                         }
                     }
                 }

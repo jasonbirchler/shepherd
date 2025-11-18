@@ -291,8 +291,8 @@ private:
         clipSequenceObjectsFifo.push(clipSequenceObject);  // Add object to the fifo si it can be pulled from the audio thread (when MIDI messages are added to buffers)
         
         if (clipSequenceObjectsFifo.getAvailableSpace() < 10){
-            DBG("WARNING, fifo for clip " << getName() << " getting close to full or full");
-            DBG("- Available space: " << clipSequenceObjectsFifo.getAvailableSpace() << ", available for reading: " << clipSequenceObjectsFifo.getNumAvailableForReading());
+            DBG("WARNING, fifo for clip " + getName() + " getting close to full or full");
+            DBG("- Available space: " + juce::String(clipSequenceObjectsFifo.getAvailableSpace()) + ", available for reading: " + juce::String(clipSequenceObjectsFifo.getNumAvailableForReading()));
         }
     }
     Fifo<ClipSequence::Ptr, 20> clipSequenceObjectsFifo;

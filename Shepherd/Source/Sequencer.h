@@ -221,7 +221,7 @@ void ShepherdWebSocketsServer::run()
     
     server.start([this](unsigned short port) {
         assignedPort = port;
-        DBG("- Started Websockets Server listening at 0.0.0.0:" << port);
+        DBG("- Started Websockets Server listening at 0.0.0.0:" + juce::String(port));
     });
     #endif
 }

@@ -262,7 +262,7 @@ void Sequencer::loadSession(juce::ValueTree& stateToLoad)
 
 void Sequencer::loadNewEmptySession(int numTracks, int numScenes)
 {
-    DBG("Loading new empty state with " << numTracks << " tracks and " << numScenes << " scenes");
+    DBG("Loading new empty state with " + juce::String(numTracks) + " tracks and " + juce::String(numScenes) + " scenes");
     juce::ValueTree stateToLoad = ShepherdHelpers::createDefaultSession(hardwareDevices->getAvailableOutputHardwareDeviceNames(), numTracks, numScenes);
     loadSession(stateToLoad);
 }
@@ -281,7 +281,7 @@ void Sequencer::loadSessionFromFile(juce::String filePath)
     juce::ValueTree stateToLoad;
     if (sessionFile.existsAsFile()){
         if (auto xml = std::unique_ptr<juce::XmlElement> (juce::XmlDocument::parse (sessionFile))){
-            DBG("Loading session from: " << sessionFile.getFullPathName());
+            DBG("Loading session from: " + sessionFile.getFullPathName());
             juce::ValueTree loadedState = juce::ValueTree::fromXml (*xml);  // Load new state into VT
             stateToLoad = loadedState; // Then set the new state
             stateLoadedFromFileSuccessfully = true;
@@ -462,7 +462,7 @@ void Sequencer::initializeMIDIInputs()
                 // If device has not been initialized, initialize it and add it to midiInDevices
                 auto midiDeviceData = initializeMidiInputDevice(hwDevice->getMidiInputDeviceName());
                 if (midiDeviceData == nullptr) {
-                    DBG("Failed to initialize input MIDI device for hardware device: " << hwDevice->getMidiInputDeviceName());
+                    DBG("Failed to initialize input MIDI device for hardware device: " + hwDevice->getMidiInputDeviceName());
                     someFailedInitialization = true;
                 } else {
                     midiInDevices.add(midiDeviceData);
@@ -524,7 +524,7 @@ void Sequencer::initializeMIDIOutputs()
             if (!midiOutputDeviceAlreadyInitialized(hwDevice->getMidiOutputDeviceName())){
                 auto midiDeviceData = initializeMidiOutputDevice(hwDevice->getMidiOutputDeviceName());
                 if (midiDeviceData == nullptr) {
-                    DBG("Failed to initialize output MIDI device for hardware device: " << hwDevice->getMidiOutputDeviceName());
+                    DBG("Failed to initialize output MIDI device for hardware device: " + hwDevice->getMidiOutputDeviceName());
                     someFailedInitialization = true;
                 } else {
                     midiOutDevices.add(midiDeviceData);
@@ -538,7 +538,7 @@ void Sequencer::initializeMIDIOutputs()
         if (!midiOutputDeviceAlreadyInitialized(midiDeviceName)){
             auto midiDeviceData = initializeMidiOutputDevice(midiDeviceName);
             if (midiDeviceData == nullptr) {
-                DBG("Failed to initialize midi device for clock: " << midiDeviceName);
+                DBG("Failed to initialize midi device for clock: " + midiDeviceName);
                 someFailedInitialization = true;
             } else {
                 midiOutDevices.add(midiDeviceData);
@@ -551,7 +551,7 @@ void Sequencer::initializeMIDIOutputs()
         if (!midiOutputDeviceAlreadyInitialized(midiDeviceName)){
             auto midiDeviceData = initializeMidiOutputDevice(midiDeviceName);
             if (midiDeviceData == nullptr) {
-                DBG("Failed to initialize midi device for transport: " << midiDeviceName);
+                DBG("Failed to initialize midi device for transport: " + midiDeviceName);
                 someFailedInitialization = true;
             } else {
                 midiOutDevices.add(midiDeviceData);
@@ -563,7 +563,7 @@ void Sequencer::initializeMIDIOutputs()
     if (!midiOutputDeviceAlreadyInitialized(sendMetronomeMidiDeviceName)){
         auto midiDeviceData = initializeMidiOutputDevice(sendMetronomeMidiDeviceName);
         if (midiDeviceData == nullptr) {
-            DBG("Failed to initialize midi device for metronome: " << sendMetronomeMidiDeviceName);
+            DBG("Failed to initialize midi device for metronome: " + sendMetronomeMidiDeviceName);
             someFailedInitialization = true;
         } else {
             midiOutDevices.add(midiDeviceData);
@@ -578,7 +578,7 @@ void Sequencer::initializeMIDIOutputs()
         if (!midiOutputDeviceAlreadyInitialized(pushMidiOutDeviceName)){
             auto pushMidiDevice = initializeMidiOutputDevice(pushMidiOutDeviceName);
             if (pushMidiDevice == nullptr) {
-                DBG("Failed to initialize push midi device: " << pushMidiOutDeviceName);
+                DBG("Failed to initialize push midi device: " + pushMidiOutDeviceName);
                 someFailedInitialization = true;
             } else {
                 midiOutDevices.add(pushMidiDevice);
@@ -1426,11 +1426,11 @@ void Sequencer::processMessageFromController (const juce::String action, juce::S
             jassert(parameters.size() == 0);
             
             DBG("=== TRANSPORT CONTROL RECEIVED ===");
-            DBG("Action: " << action);
-            DBG("Current playing state: " << (musicalContext ? musicalContext->playheadIsPlaying() : "NO MUSICAL CONTEXT"));
-            DBG("Tracks initialized: " << (tracks ? "YES" : "NO"));
-            DBG("Hardware devices initialized: " << (hardwareDevices ? "YES" : "NO"));
-            DBG("Sequencer initialized: " << sequencerInitialized);
+            DBG("Action: " + action);
+            DBG("Current playing state: " + juce::String(musicalContext ? (musicalContext->playheadIsPlaying() ? "true" : "false") : "NO MUSICAL CONTEXT"));
+            DBG("Tracks initialized: " + juce::String(tracks ? "YES" : "NO"));
+            DBG("Hardware devices initialized: " + juce::String(hardwareDevices ? "YES" : "NO"));
+            DBG("Sequencer initialized: " + juce::String(sequencerInitialized ? "true" : "false"));
             
             if (!musicalContext) {
                 DBG("ERROR: Musical context is null - transport controls may not work!");
@@ -1469,7 +1469,7 @@ void Sequencer::processMessageFromController (const juce::String action, juce::S
                     shouldToggleIsPlaying = true;
                 }
             }
-            DBG("shouldToggleIsPlaying set to: " << (shouldToggleIsPlaying ? "true" : "false"));
+            DBG("shouldToggleIsPlaying set to: " + juce::String(shouldToggleIsPlaying ? "true" : "false"));
             
             // Original logic preserved
             if (musicalContext && musicalContext->playheadIsPlaying()){
