@@ -7,6 +7,7 @@
 */
 
 #include <JuceHeader.h>
+#include "compatibility.hpp"  // Include compatibility fixes for older C++ standards
 #include "MainComponent.h"
 
 //==============================================================================
