@@ -35,6 +35,7 @@ echo
 # Run MIDI transport tests
 echo "5. MIDI Transport Separation Tests"
 echo "----------------------------------"
+make -f Makefile_transport clean
 make -f Makefile_transport test
 TRANSPORT_RESULT=$?
 echo
@@ -42,6 +43,7 @@ echo
 # Run transport config tests
 echo "6. Transport Configuration Tests"
 echo "--------------------------------"
+make -f Makefile_config clean
 make -f Makefile_config test
 CONFIG_RESULT=$?
 echo

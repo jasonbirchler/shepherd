@@ -19,7 +19,7 @@ clean:
 	rm -f $(TARGET)
 
 # Run tests
-test: $(TARGET)
+test: clean $(TARGET)
 	./$(TARGET)
 
 .PHONY: clean test
