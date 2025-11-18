@@ -32,8 +32,24 @@ make -f backend_component_makefile test
 COMPONENT_RESULT=$?
 echo
 
+# Run MIDI transport tests
+echo "5. MIDI Transport Separation Tests"
+echo "----------------------------------"
+make -f Makefile_transport clean
+make -f Makefile_transport test
+TRANSPORT_RESULT=$?
+echo
+
+# Run transport config tests
+echo "6. Transport Configuration Tests"
+echo "--------------------------------"
+make -f Makefile_config clean
+make -f Makefile_config test
+CONFIG_RESULT=$?
+echo
+
 # Run minimal JUCE-like tests
-echo "5. Minimal JUCE-like Tests (Proof of Concept)"
+echo "7. Minimal JUCE-like Tests (Proof of Concept)"
 echo "----------------------------------------------"
 make -f minimal_juce_makefile test
 JUCE_RESULT=$?
@@ -66,6 +82,18 @@ else
     echo "❌ Backend Component Tests: FAILED"
 fi
 
+if [ $TRANSPORT_RESULT -eq 0 ]; then
+    echo "✅ MIDI Transport Tests: PASSED"
+else
+    echo "❌ MIDI Transport Tests: FAILED"
+fi
+
+if [ $CONFIG_RESULT -eq 0 ]; then
+    echo "✅ Transport Config Tests: PASSED"
+else
+    echo "❌ Transport Config Tests: FAILED"
+fi
+
 if [ $JUCE_RESULT -eq 0 ]; then
     echo "✅ Minimal JUCE-like Tests: PASSED"
 else
@@ -73,7 +101,7 @@ else
 fi
 
 # Overall result
-TOTAL_FAILURES=$((SIMPLE_RESULT + MOCK_RESULT + INTEGRATION_RESULT + COMPONENT_RESULT + JUCE_RESULT))
+TOTAL_FAILURES=$((SIMPLE_RESULT + MOCK_RESULT + INTEGRATION_RESULT + COMPONENT_RESULT + TRANSPORT_RESULT + CONFIG_RESULT + JUCE_RESULT))
 if [ $TOTAL_FAILURES -eq 0 ]; then
     echo
     echo "🎉 All tests passed!"

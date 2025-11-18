@@ -31,6 +31,7 @@ Sequencer::Sequencer()
     // (therefore 9 bytes?). These buffers are cleared at every slice, so some milliseconds only, no need to make them super
     // big but make them considerably big to be on the safe side.
     midiClockMessages.ensureSize(MIDI_BUFFER_MIN_BYTES);
+    midiTransportMessages.ensureSize(MIDI_BUFFER_MIN_BYTES);
     midiMetronomeMessages.ensureSize(MIDI_BUFFER_MIN_BYTES);
     pushMidiClockMessages.ensureSize(MIDI_BUFFER_MIN_BYTES);
     monitoringNotesMidiBuffer.ensureSize(MIDI_BUFFER_MIN_BYTES);
@@ -40,6 +41,7 @@ Sequencer::Sequencer()
 
     // Load some settings from file
     sendMidiClockMidiDeviceNames = getListStringPropertyFromSettingsFile("midiDevicesToSendClockTo");
+    sendMidiTransportMidiDeviceNames = getListStringPropertyFromSettingsFile("midiDevicesToSendTransportTo");
     sendMetronomeMidiDeviceName = getStringPropertyFromSettingsFile("metronomeMidiDevice");
     
     // Init MIDI
@@ -504,6 +506,19 @@ void Sequencer::initializeMIDIOutputs()
         }
     }
     
+    // Initialize midi output devices used for transport messages
+    for (auto midiDeviceName: sendMidiTransportMidiDeviceNames){
+        if (!midiOutputDeviceAlreadyInitialized(midiDeviceName)){
+            auto midiDeviceData = initializeMidiOutputDevice(midiDeviceName);
+            if (midiDeviceData == nullptr) {
+                DBG("Failed to initialize midi device for transport: " << midiDeviceName);
+                someFailedInitialization = true;
+            } else {
+                midiOutDevices.add(midiDeviceData);
+            }
+        }
+    }
+    
     // Init metronome decice
     if (!midiOutputDeviceAlreadyInitialized(sendMetronomeMidiDeviceName)){
         auto midiDeviceData = initializeMidiOutputDevice(sendMetronomeMidiDeviceName);
@@ -887,6 +902,7 @@ void Sequencer::getNextMIDISlice (int sliceNumSamples)
     clearMidiDeviceOutputBuffers();
     clearMidiTrackBuffers();
     midiClockMessages.clear();
+    midiTransportMessages.clear();
     midiMetronomeMessages.clear();
     pushMidiClockMessages.clear();
     monitoringNotesMidiBuffer.clear();
@@ -972,7 +988,7 @@ void Sequencer::getNextMIDISlice (int sliceNumSamples)
             musicalContext->setPlayheadIsPlaying(false);
             musicalContext->setPlayheadPosition(0.0);
             musicalContext->resetCounters();
-            musicalContext->renderMidiStopInSlice(midiClockMessages);
+            musicalContext->renderMidiStopInSlice(midiTransportMessages);
         } else {
             // If global playhead is stopped but it should be toggled, set all tracks/clips to the start position and toggle to play
             // Also send MIDI start message for devices syncing to MIDI clock
@@ -980,7 +996,7 @@ void Sequencer::getNextMIDISlice (int sliceNumSamples)
                 track->clipsResetPlayheadPosition();
             }
             musicalContext->setPlayheadIsPlaying(true);
-            musicalContext->renderMidiStartInSlice(midiClockMessages);
+            musicalContext->renderMidiStartInSlice(midiTransportMessages);
         }
         shouldToggleIsPlaying = false;
     }
@@ -1039,9 +1055,10 @@ void Sequencer::getNextMIDISlice (int sliceNumSamples)
         }
     }
     
-    // Add metronome and MIDI clock messages to the corresponding hardware device buffers according to settings
+    // Add metronome, MIDI clock, and transport messages to the corresponding hardware device buffers according to settings
     // Also send MIDI clock message to Push
     writeMidiToDevicesMidiBuffer(midiClockMessages, sendMidiClockMidiDeviceNames);
+    writeMidiToDevicesMidiBuffer(midiTransportMessages, sendMidiTransportMidiDeviceNames);
     if (sendMetronomeMidiDeviceName != ""){
         writeMidiToDevicesMidiBuffer(midiMetronomeMessages, {sendMetronomeMidiDeviceName});
     }

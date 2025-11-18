@@ -1,0 +1,22 @@
+CXX = g++
+CXXFLAGS = -std=c++17 -Wall -Wextra -O2
+
+# Target executable
+TARGET = transport_config_tests
+
+# Source files
+SOURCES = transport_config_tests.cpp
+
+# Build rule
+$(TARGET): $(SOURCES)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SOURCES)
+
+# Clean rule
+clean:
+	rm -f $(TARGET)
+
+# Run tests
+test: clean $(TARGET)
+	./$(TARGET)
+
+.PHONY: clean test
