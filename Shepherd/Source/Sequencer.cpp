@@ -36,6 +36,16 @@ Sequencer::Sequencer()
     pushMidiClockMessages.ensureSize(MIDI_BUFFER_MIN_BYTES);
     monitoringNotesMidiBuffer.ensureSize(MIDI_BUFFER_MIN_BYTES);
 
+    // Log build configuration and basic system info
+    std::cout << "=== SHEPHERD INITIALIZATION ===" << std::endl;
+    #ifdef RPI_BUILD
+    std::cout << "Build Type: RPI_BUILD (Raspberry Pi optimized)" << std::endl;
+    #else
+    std::cout << "Build Type: Standard Linux build" << std::endl;
+    #endif
+    std::cout << "Platform: Linux" << std::endl;
+    std::cout << "JUCE Version: " << ProjectInfo::versionString << std::endl;
+    
     // Init hardware devices
     initializeHardwareDevices();
 
@@ -418,7 +428,28 @@ void Sequencer::initializeMIDIInputs()
 {
     JUCE_ASSERT_MESSAGE_THREAD
     
+    std::cout << "=== MIDI INPUT INITIALIZATION ===" << std::endl;
     std::cout << "Initializing MIDI input devices" << std::endl;
+    
+    // Log available MIDI input devices
+    auto availableInputs = juce::MidiInput::getAvailableDevices();
+    std::cout << "Available MIDI inputs:" << std::endl;
+    for (const auto& device : availableInputs) {
+        std::cout << "- " << device.name << " (ID: " << device.identifier << ")" << std::endl;
+    }
+    std::cout << "Total available: " << availableInputs.size() << " devices" << std::endl;
+    
+    // Check ALSA connections
+    FILE* pipe = popen("aconnect -l 2>/dev/null || echo 'ALSA not available'", "r");
+    if (pipe) {
+        char buffer[256];
+        std::cout << "ALSA connections:" << std::endl;
+        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+            std::cout << "  " << buffer;
+        }
+        pclose(pipe);
+    }
+    std::cout << std::endl;
     
     lastTimeMidiInputInitializationAttempted = juce::Time::getMillisecondCounter();
     
@@ -472,7 +503,16 @@ void Sequencer::initializeMIDIOutputs()
 {
     JUCE_ASSERT_MESSAGE_THREAD
     
+    std::cout << "=== MIDI OUTPUT INITIALIZATION ===" << std::endl;
     std::cout << "Initializing MIDI output devices" << std::endl;
+    
+    // Log available MIDI output devices
+    auto availableOutputs = juce::MidiOutput::getAvailableDevices();
+    std::cout << "Available MIDI outputs:" << std::endl;
+    for (const auto& device : availableOutputs) {
+        std::cout << "- " << device.name << " (ID: " << device.identifier << ")" << std::endl;
+    }
+    std::cout << "Total available: " << availableOutputs.size() << " devices" << std::endl;
     
     lastTimeMidiOutputInitializationAttempted = juce::Time::getMillisecondCounter();
     
@@ -1384,6 +1424,72 @@ void Sequencer::processMessageFromController (const juce::String action, juce::S
     } else if (action.startsWith(ACTION_ADDRESS_TRANSPORT)) {
         if (action == ACTION_ADDRESS_TRANSPORT_PLAY_STOP){
             jassert(parameters.size() == 0);
+            
+            DBG("=== TRANSPORT CONTROL RECEIVED ===");
+            DBG("Action: " << action);
+            DBG("Current playing state: " << (musicalContext ? musicalContext->playheadIsPlaying() : "NO MUSICAL CONTEXT"));
+            DBG("Tracks initialized: " << (tracks ? "YES" : "NO"));
+            DBG("Hardware devices initialized: " << (hardwareDevices ? "YES" : "NO"));
+            DBG("Sequencer initialized: " << sequencerInitialized);
+            
+            if (!musicalContext) {
+                DBG("ERROR: Musical context is null - transport controls may not work!");
+            }
+            if (!tracks) {
+                DBG("ERROR: Tracks is null - transport controls may not work!");
+            }
+            if (!hardwareDevices) {
+                DBG("ERROR: Hardware devices is null - transport controls may not work!");
+            }
+            if (!sequencerInitialized) {
+                DBG("ERROR: Sequencer not fully initialized - transport controls may not work!");
+            }
+            
+            if (musicalContext && musicalContext->playheadIsPlaying()){
+                // If it is playing, stop it
+                DBG("Stopping transport");
+                shouldToggleIsPlaying = true;
+            } else {
+                // If it is not playing, check if there are record-armed clips and, if so, do count-in before playing
+                bool recordCuedClipsFound = false;
+                if (tracks) {
+                    for (auto track: tracks->objects){
+                        if (track->hasClipsCuedToRecord()){
+                            recordCuedClipsFound = true;
+                            DBG("Found clips cued to record, starting count-in");
+                            break;
+                        }
+                    }
+                }
+                if (recordCuedClipsFound && musicalContext){
+                    DBG("Starting count-in for recording");
+                    musicalContext->setPlayheadIsDoingCountIn(true);
+                } else {
+                    DBG("Starting transport without count-in");
+                    shouldToggleIsPlaying = true;
+                }
+            }
+            DBG("shouldToggleIsPlaying set to: " << shouldToggleIsPlaying);
+            
+            // Original logic preserved
+            if (musicalContext && musicalContext->playheadIsPlaying()){
+                // If it is playing, stop it
+                shouldToggleIsPlaying = true;
+            } else{
+                // If it is not playing, check if there are record-armed clips and, if so, do count-in before playing
+                bool recordCuedClipsFound = false;
+                for (auto track: tracks->objects){
+                    if (track->hasClipsCuedToRecord()){
+                        recordCuedClipsFound = true;
+                        break;
+                    }
+                }
+                if (recordCuedClipsFound){
+                    musicalContext->setPlayheadIsDoingCountIn(true);
+                } else {
+                    shouldToggleIsPlaying = true;
+                }
+            }
             if (musicalContext->playheadIsPlaying()){
                 // If it is playing, stop it
                 shouldToggleIsPlaying = true;
