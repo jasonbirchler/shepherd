@@ -10,6 +10,9 @@
 
 #pragma once
 
+// Include compatibility fixes FIRST, before any other headers
+#include "compatibility.hpp"
+
 #include <JuceHeader.h>
 #include "helpers_shepherd.h"
 #include "MusicalContext.h"

@@ -6,8 +6,10 @@
   ==============================================================================
 */
 
+// Include compatibility fixes FIRST, before any other headers
+#include "compatibility.hpp"
+
 #include <JuceHeader.h>
-#include "compatibility.hpp"  // Include compatibility fixes for older C++ standards
 #include "MainComponent.h"
 
 //==============================================================================
