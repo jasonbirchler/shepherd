@@ -46,6 +46,12 @@ Sequencer::Sequencer()
     std::cout << "Platform: Linux" << std::endl;
     std::cout << "JUCE Version: " << ProjectInfo::versionString << std::endl;
     
+    // Set default sample rate to avoid MIDI collector assertions
+    sampleRate = getIntPropertyFromSettingsFile("sampleRate");
+    if (sampleRate <= 0) sampleRate = 44100.0;  // Default if not configured
+    samplesPerSlice = getIntPropertyFromSettingsFile("samplesPerSlice");
+    if (samplesPerSlice <= 0) samplesPerSlice = 512;  // Default if not configured
+    
     // Init hardware devices
     initializeHardwareDevices();
 
