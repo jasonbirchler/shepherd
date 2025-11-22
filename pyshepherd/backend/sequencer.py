@@ -103,9 +103,13 @@ class Sequencer:
     
     def _start_websocket_server(self):
         """Start WebSocket server for remote control"""
-        from ..server.websocket_server import WebSocketServer
-        self._websocket_server = WebSocketServer(self, port=self.websocket_port)
-        self._websocket_server.start()
+        try:
+            from ..server.websocket_server import WebSocketServer
+            self._websocket_server = WebSocketServer(self, port=self.websocket_port)
+            self._websocket_server.start()
+        except ImportError:
+            print("WebSocket server not available")
+            self._websocket_server = None
     
     def get_state_dict(self) -> Dict[str, Any]:
         """Get current state as dictionary for WebSocket clients"""

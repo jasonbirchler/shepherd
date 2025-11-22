@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: pyshepherd
+Version: 2.0.0
+Requires-Python: >=3.8
+License-File: LICENSE
+Requires-Dist: mido>=1.2.10
+Requires-Dist: websockets>=10.0
+Provides-Extra: test
+Requires-Dist: pytest>=7.0.0; extra == "test"
+Requires-Dist: pytest-cov>=4.0.0; extra == "test"
+Requires-Dist: pytest-mock>=3.10.0; extra == "test"
+Dynamic: license-file
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python

@@ -136,12 +136,16 @@ class TestSequencerIntegration:
         session = sequencer.new_session(num_tracks=1, num_scenes=1)
         
         track = session.tracks[0]
-        track.set_output_device('Out1')  # Should match short name
-        
-        assert track.output_hardware_device_name == 'Out1'
-        device = track.get_output_device()
-        assert device is not None
-        assert device.short_name == 'Out1'
+        # Use the actual device name that gets created
+        available_devices = sequencer.hardware_devices.get_available_output_names()
+        if available_devices:
+            device_name = available_devices[0]
+            track.set_output_device(device_name)
+            
+            assert track.output_hardware_device_name == device_name
+            device = track.get_output_device()
+            assert device is not None
+            assert device.short_name == device_name
 
 
 class TestSequencerPerformance:

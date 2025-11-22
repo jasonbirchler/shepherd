@@ -2,7 +2,7 @@
 from .sequencer import Sequencer
 from .session import Session
 from .track import Track
-from .clip import Clip
+from .clip import Clip, SequenceEvent
 from .musical_context import MusicalContext
 from .hardware_device import HardwareDevice, HardwareDeviceManager
 
@@ -11,6 +11,7 @@ __all__ = [
     'Session', 
     'Track',
     'Clip',
+    'SequenceEvent',
     'MusicalContext',
     'HardwareDevice',
     'HardwareDeviceManager'
