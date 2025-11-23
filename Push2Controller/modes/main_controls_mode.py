@@ -130,7 +130,8 @@ class MainControlsMode(definitions.ShepherdControllerMode):
 
         elif button_name == self.play_button:
             self.session.play_stop()
-            return True 
+            self.app.buttons_need_update = True
+            return True
             
         elif button_name == self.record_button:
             if not long_press:
@@ -140,9 +141,10 @@ class MainControlsMode(definitions.ShepherdControllerMode):
 
         elif button_name == self.metronome_button:
             self.session.metronome_on_off()
+            self.app.buttons_need_update = True
             self.app.add_display_notification(
                 "Metronome: {0}".format('On' if not self.session.metronome_on else 'Off'))
-            return True  
+            return True
 
         elif button_name == self.tap_tempo_button:
             self.last_tap_tempo_times.append(time.time())

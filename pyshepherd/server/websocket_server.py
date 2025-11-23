@@ -92,15 +92,24 @@ class WebSocketServer:
             self.clients.discard(websocket)
     
     async def _handle_message(self, websocket, message: str):
+        print(f"Received message: {message}")
         """Handle incoming WebSocket message"""
         try:
             # Parse OSC-style message format: "/address param1 param2 ..."
-            parts = message.strip().split()
-            if not parts:
-                return
-            
-            address = parts[0]
-            params = parts[1:] if len(parts) > 1 else []
+            # Special handling for /session/sync which contains JSON
+            if message.strip().startswith('/session/sync'):
+                # Extract address and JSON payload
+                parts = message.strip().split(' ', 1)  # Split only on first space
+                address = parts[0]
+                params = [parts[1]] if len(parts) > 1 else []
+            else:
+                # Normal parsing for other messages
+                parts = message.strip().split()
+                if not parts:
+                    return
+                
+                address = parts[0]
+                params = parts[1:] if len(parts) > 1 else []
             
             # Route message to appropriate handler
             await self._route_message(websocket, address, params)
@@ -112,8 +121,24 @@ class WebSocketServer:
     async def _route_message(self, websocket, address: str, params: list):
         """Route message to appropriate handler based on address"""
         
+        # Session synchronization from frontend
+        if address == '/session/sync':
+            # Frontend is sending its session data to sync with backend
+            # params[0] should be JSON-encoded session data
+            if params:
+                try:
+                    import json
+                    session_data = json.loads(params[0])
+                    # Create session from frontend data
+                    num_tracks = len(session_data.get('tracks', []))
+                    num_scenes = session_data.get('num_scenes', 4)
+                    self.sequencer.new_session(num_tracks, num_scenes, session_data.get('name', 'Synced Session'))
+                    print(f"DEBUG: Synced session from frontend with {num_tracks} tracks")
+                except Exception as e:
+                    print(f"ERROR: Failed to sync session from frontend: {e}")
+        
         # Session management
-        if address == '/settings/new':
+        elif address == '/settings/new':
             num_tracks, num_scenes = int(params[0]), int(params[1])
             self.sequencer.new_session(num_tracks, num_scenes)
         
@@ -165,17 +190,38 @@ class WebSocketServer:
             track_uuid, device_name = params[0], params[1]
             # TODO: Implement track device assignment
         
+        # Control Change (MIDI CC) handling
+        elif address == '/control/change':
+            # Handle MIDI CC messages from encoders
+            # params: [cc_number, value]
+            if len(params) >= 2:
+                try:
+                    cc_number = int(params[0])
+                    value = int(params[1])
+                    
+                    # Find the output device that should receive this CC
+                    # For now, send to all output devices (in a real implementation,
+                    # we'd map based on current track selection)
+                    for device in self.sequencer.hardware_devices.get_output_devices():
+                        device.handle_control_change(cc_number, value)
+                    
+                    print(f"DEBUG: Handled CC {cc_number} = {value}")
+                except Exception as e:
+                    print(f"ERROR: Failed to handle control change: {e}")
+        
         # Clip controls
         elif address.startswith('/clip/'):
             # TODO: Implement clip controls
             pass
         
         # Send state update after processing
+        print(f"DEBUG: Broadcasting state update after processing {address}")
         await self._broadcast_state_update()
     
     async def _send_state_update(self, websocket=None):
         """Send current state to client(s)"""
         state = self.sequencer.get_state_dict()
+        print(f"DEBUG: Sending state update - is_playing={state.get('session', {}).get('is_playing') if state.get('session') else 'NO SESSION'}")
         message = json.dumps({
             'type': 'state_update',
             'data': state

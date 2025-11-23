@@ -108,7 +108,16 @@ class MIDICCMode(ShepherdControllerMode):
         return section_names
 
     def get_currently_selected_midi_cc_section_and_page(self):
-        return self.current_selected_section_and_page.get(self.get_current_track_device_short_name_helper(), [[], 0])
+        device_short_name = self.get_current_track_device_short_name_helper()
+        if device_short_name not in self.current_selected_section_and_page:
+            # Initialize with first section if not already set
+            controls = self.device_midi_control_ccs.get(device_short_name, [])
+            if controls:
+                first_section = controls[0].section
+                self.current_selected_section_and_page[device_short_name] = (first_section, 0)
+            else:
+                return ('', 0)
+        return self.current_selected_section_and_page.get(device_short_name, ('', 0))
 
     def get_midi_cc_controls_for_current_track_and_section(self):
         section, _ = self.get_currently_selected_midi_cc_section_and_page()
@@ -146,6 +155,13 @@ class MIDICCMode(ShepherdControllerMode):
         return show_prev, show_next
 
     def new_track_selected(self):
+        device_short_name = self.get_current_track_device_short_name_helper()
+        # Initialize section/page for this device if not already set
+        if device_short_name not in self.current_selected_section_and_page:
+            controls = self.device_midi_control_ccs.get(device_short_name, [])
+            if controls:
+                first_section = controls[0].section
+                self.current_selected_section_and_page[device_short_name] = (first_section, 0)
         self.active_midi_control_ccs = self.get_midi_cc_controls_for_current_track_section_and_page()
         self.update_encoders_backend_mapping()
 
@@ -191,17 +207,17 @@ class MIDICCMode(ShepherdControllerMode):
         self.set_button_color_if_expression(self.page_right_button, show_next)
 
     def update_display(self, ctx, w, h):
+        # Fixed rendering - text overflow was the issue!
+        
         if not self.app.is_mode_active(self.app.settings_mode) and not self.app.is_mode_active(self.app.clip_triggering_mode) and not self.app.is_mode_active(self.app.clip_edit_mode):
             # If settings mode is active, don't draw the upper parts of the screen because settings page will
             # "cover them"
 
-            # Draw MIDI CCs section names
+            # Draw MIDI CCs section names (shortened to prevent overflow)
             section_names = self.get_current_track_midi_cc_sections()[0:8]
             if section_names:
                 height = 20
                 for i, section_name in enumerate(section_names):
-                    show_text(ctx, i, 0, section_name, background_color=definitions.RED)
-                    
                     is_selected = False
                     selected_section, _ = self.get_currently_selected_midi_cc_section_and_page()
                     if selected_section == section_name:
@@ -214,7 +230,10 @@ class MIDICCMode(ShepherdControllerMode):
                     else:
                         background_color = definitions.BLACK
                         font_color = current_track_color
-                    show_text(ctx, i, 0, section_name, height=height,
+                    
+                    # Shorten section name to prevent overflow (e.g., "0 to 15" -> "0")
+                    short_name = section_name.split(' ')[0] if ' ' in section_name else section_name
+                    show_text(ctx, i, 0, short_name, height=height,
                             font_color=font_color, background_color=background_color)
 
             # Draw MIDI CC controls
@@ -228,6 +247,27 @@ class MIDICCMode(ShepherdControllerMode):
                         self.active_midi_control_ccs[i].draw(ctx, i, value)
                     else:
                         continue
+
+        # Always draw track names at the bottom (similar to track selection mode)
+        if self.session is not None and self.session.tracks is not None:
+            height = 20
+            for i in range(0, len(self.session.tracks)):
+                track_color = self.app.track_selection_mode.get_track_color(self.session.tracks[i])
+                if self.app.track_selection_mode.selected_track == i:
+                    background_color = track_color
+                    font_color = definitions.BLACK
+                else:
+                    background_color = definitions.BLACK
+                    font_color = track_color
+                track = self.session.get_track_by_idx(i)
+                device_short_name = track.output_hardware_device_name
+                if track.input_monitoring:
+                    device_short_name = '+' + device_short_name
+                # Show placeholder text only if device name is completely empty (no plus added)
+                if not device_short_name or device_short_name == '+':
+                    device_short_name = f'Track {i+1}'
+                show_text(ctx, i, h - height, device_short_name, height=height,
+                        font_color=font_color, background_color=background_color)
 
     def on_button_pressed(self, button_name, shift=False, select=False, long_press=False, double_press=False):
         if button_name in self.midi_cc_button_names:
@@ -261,9 +301,30 @@ class MIDICCMode(ShepherdControllerMode):
                     push2_python.constants.ENCODER_TRACK7_ENCODER,
                     push2_python.constants.ENCODER_TRACK8_ENCODER,
                 ].index(encoder_name)
+                
+                # Get the CC number mapped to this encoder
+                if encoder_num < len(self.active_midi_control_ccs):
+                    cc_control = self.active_midi_control_ccs[encoder_num]
+                    cc_number = cc_control.cc_number
+                    
+                    # Get current value and update it
+                    hardware_device = self.state.get_output_hardware_device_by_name(
+                        self.get_current_track_device_short_name_helper())
+                    if hardware_device is not None:
+                        current_value = hardware_device.get_current_midi_cc_parameter_value(cc_number)
+                        # Update value based on increment (clamp to 0-127)
+                        new_value = max(0, min(127, current_value + increment))
+                        
+                        # Send control change to hardware device
+                        try:
+                            hardware_device.set_midi_cc_parameter_value(cc_number, new_value)
+                        except AttributeError:
+                            # Fallback for devices that don't have this method
+                            print(f"DEBUG: Hardware device doesn't support set_midi_cc_parameter_value, CC {cc_number} = {new_value}")
+                        except Exception as e:
+                            print(f"DEBUG: Error setting MIDI CC {cc_number}: {e}")
+                        
                 return True  # Always return True because encoder should not be used in any other mode if this is first active
-                # Note that we don't do anything else here because actual midi CC triggering action happens in the
-                # backend using the enbcoders mapping
-            except ValueError: 
-                pass  # Encoder not in list 
+            except ValueError:
+                pass  # Encoder not in list
         

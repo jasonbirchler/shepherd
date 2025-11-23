@@ -107,6 +107,9 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
             try:
                 self.init_modes(self.load_settings_from_file())
                 print(f"Modes initialized successfully: {self.modes_initialized}")
+                # Sync session to backend after modes are initialized
+                if hasattr(self, 'sync_session_to_backend'):
+                    self.sync_session_to_backend()
             except Exception as e:
                 print(f"Error during mode initialization: {e}")
                 import traceback
@@ -121,7 +124,7 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
         self.notes_midi_in = None
 
     def on_state_update_received(self, update_data):
-        if self.shepherd_interface.state is None or not self.modes_initialized: 
+        if self.shepherd_interface.state is None or not self.modes_initialized:
             return
         # Check if playhead is changing while doing count in, and show notification message
         if update_data['updateType'] == 'propertyChanged':
@@ -142,6 +145,7 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
         # TODO: this should be optimized, we should interpret update_data in an intelligent way and decide
         # TODO: what to update from every state to avoid doing more work than necessary
         self.active_modes_need_reactivate = True
+        self.buttons_need_update = True
 
     def init_modes(self, settings):
         print('Initializing app modes...')
@@ -438,14 +442,6 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
                     import traceback
                     traceback.print_exc()
 
-            # Debug: Log that test pattern was drawn
-            if self._display_debug_counter % 300 == 0:
-                print("Test pattern drawn - white rectangle at (10,10)")
-
-            # Debug: Log modes update status occasionally
-            if self._display_debug_counter % 300 == 0:
-                print(f"Updated display for {modes_updated}/{len(self.active_modes)} modes")
-
             # Show any notifications that should be shown
             if hasattr(self, 'notification_text') and self.notification_text is not None:
                 if not hasattr(self, 'notification_time'):
@@ -461,10 +457,6 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
             buf = surface.get_data()
             frame = numpy.ndarray(shape=(h, w), dtype=numpy.uint16, buffer=buf).transpose()
             self.push.display.display_frame(frame, input_format=push2_python.constants.FRAME_FORMAT_RGB565)
-            
-            # Debug: Log successful display update occasionally
-            if self._display_debug_counter % 300 == 0:
-                print("Display frame sent successfully")
                 
         except Exception as e:
             print(f"Error updating Push2 display: {e}")

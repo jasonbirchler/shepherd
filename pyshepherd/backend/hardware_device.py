@@ -6,7 +6,7 @@ import uuid
 class HardwareDevice:
     """Represents a MIDI hardware device (input or output)"""
     
-    def __init__(self, name: str, short_name: str, device_type: str, 
+    def __init__(self, name: str, short_name: str, device_type: str,
                  midi_device_name: str, midi_channel: int = 1):
         self.uuid = str(uuid.uuid4())
         self.name = name
@@ -14,6 +14,10 @@ class HardwareDevice:
         self.type = device_type  # 'input' or 'output'
         self.midi_device_name = midi_device_name
         self.midi_channel = midi_channel
+        
+        # MIDI CC mapping and values
+        self._control_change_mapping: Dict[int, int] = {}  # Maps encoder numbers to CC numbers
+        self._midi_cc_values: Dict[int, int] = {}  # Current CC values
         
         # MIDI port
         self._midi_port: Optional[mido.ports.BasePort] = None
@@ -81,6 +85,40 @@ class HardwareDevice:
             'midi_channel': self.midi_channel,
             'is_open': self.is_open
         }
+    
+    def set_control_change_mapping(self, mapping: List[int]):
+        """Set control change mapping for encoders
+        
+        Args:
+            mapping: List of 128 integers where index is encoder number and value is CC number
+                    Use -1 to disable an encoder
+        """
+        self._control_change_mapping = {}
+        for encoder_num, cc_number in enumerate(mapping):
+            if cc_number >= 0:  # Only map enabled encoders
+                self._control_change_mapping[encoder_num] = cc_number
+    
+    def get_current_midi_cc_parameter_value(self, cc_number: int) -> int:
+        """Get current value of a MIDI CC parameter"""
+        return self._midi_cc_values.get(cc_number, 0)
+    
+    def set_midi_cc_parameter_value(self, cc_number: int, value: int):
+        """Set MIDI CC parameter value and send MIDI CC message if output device"""
+        # Clamp value to 0-127 range
+        value = max(0, min(127, value))
+        self._midi_cc_values[cc_number] = value
+        
+        # Send MIDI CC message if this is an output device
+        if self.type == 'output':
+            cc_message = mido.Message('control_change',
+                                     channel=self.midi_channel - 1,
+                                     control=cc_number,
+                                     value=value)
+            self.send_message(cc_message)
+    
+    def handle_control_change(self, cc_number: int, value: int):
+        """Handle incoming control change message"""
+        self._midi_cc_values[cc_number] = value
 
 
 class HardwareDeviceManager:

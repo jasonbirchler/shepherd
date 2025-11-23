@@ -9,9 +9,32 @@ class MockHardwareDevice:
     
     def __init__(self, device_data):
         self._data = device_data
+        self._midi_cc_values = {}  # Store current MIDI CC values
+        self._control_change_mapping = {}  # Maps encoder numbers to CC numbers
     
     def __getattr__(self, name):
         return self._data.get(name)
+    
+    def set_control_change_mapping(self, mapping):
+        """Set control change mapping for encoders - mock implementation"""
+        self._control_change_mapping = {}
+        for encoder_num, cc_number in enumerate(mapping):
+            if cc_number >= 0:  # Only map enabled encoders
+                self._control_change_mapping[encoder_num] = cc_number
+    
+    def get_current_midi_cc_parameter_value(self, cc_number):
+        """Get current MIDI CC parameter value"""
+        return self._midi_cc_values.get(cc_number, 0)
+    
+    def set_midi_cc_parameter_value(self, cc_number, value):
+        """Set MIDI CC parameter value"""
+        # Clamp value to 0-127 range
+        value = max(0, min(127, value))
+        self._midi_cc_values[cc_number] = value
+    
+    def handle_control_change(self, cc_number, value):
+        """Handle incoming control change message - mock implementation"""
+        self._midi_cc_values[cc_number] = value
 
 
 class MockState:
@@ -34,10 +57,17 @@ class MockState:
     
     def get_output_hardware_device_by_name(self, name):
         """Get output hardware device by name - mock implementation"""
+        # First try to find in hardware_devices list
         devices = self._data.get('hardware_devices', {}).get('devices', [])
         for device in devices:
             if device.get('type') == 'output' and device.get('midi_device_name') == name:
                 return MockHardwareDevice(device)
+        
+        # If not found and name is provided, create a default mock device
+        # This allows the system to work even without explicit hardware device definitions
+        if name:
+            return MockHardwareDevice({'type': 'output', 'name': name})
+        
         return None
     
     def get_available_output_hardware_device_names(self):
@@ -71,6 +101,33 @@ class MockClip:
     @property
     def clip_length_in_beats(self):
         return self._data.get('length_beats', 4.0)
+    
+    def get_status(self):
+        """Get clip status as a string with status characters
+        
+        Status characters:
+        - 'p': playing
+        - 'r': recording
+        - 'w': will record (cued to record)
+        - 'W': will record (fixed length)
+        - 'C': cued to play
+        """
+        status = ''
+        if self._data.get('is_playing', False):
+            status += 'p'
+        if self._data.get('is_recording', False):
+            status += 'r'
+        if self._data.get('will_record', False):
+            status += 'w'
+        if self._data.get('will_record_fixed_length', False):
+            status += 'W'
+        if self._data.get('cued_to_play', False):
+            status += 'C'
+        return status
+    
+    def record_on_off(self):
+        """Toggle recording state - mock implementation"""
+        self._data['is_recording'] = not self._data.get('is_recording', False)
 
 
 class MockTrack:
