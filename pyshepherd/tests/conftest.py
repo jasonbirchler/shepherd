@@ -1,5 +1,6 @@
 from unittest.mock import Mock, patch
 import pytest
+from .fixtures import MockState, MockSession, MockTrack, MockClip, MockHardwareDevice
 
 
 @pytest.fixture
