@@ -29,9 +29,22 @@
       "program": "${workspaceFolder}/Push2Controller/app.py",
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/Push2Controller",
-      "python": "${workspaceFolder}/Push2Controller/venv/bin/python",
+      "python": "${workspaceFolder}/venv/bin/python",
       "env": {
         "PYTHONPATH": "${workspaceFolder}/Push2Controller:${workspaceFolder}"
+      },
+      "args": ["-s"]
+    },
+    {
+      "name": "Debug: Shephard backend",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/pyshepherd/pyshepherd.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/pyshepherd",
+      "python": "${workspaceFolder}/venv/bin/python",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}:${workspaceFolder}"
       },
       "args": ["-s"]
     }
