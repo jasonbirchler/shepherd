@@ -1,5 +1,5 @@
 # pyshepherd - Shepherd MIDI Sequencer Backend
-# Direct Python API for MIDI sequencing
+# Dual-purpose: Direct Python API and WebSocket client compatibility
 
 # Direct backend API
 from .backend import (
@@ -13,9 +13,13 @@ from .backend import (
     HardwareDeviceManager
 )
 
+# WebSocket client API (compatibility)
+from .client import ShepherdBackendControllerApp
+
 __version__ = "2.0.0"
 
 __all__ = [
+    # Direct backend API
     'Sequencer',
     'Session',
     'Track', 
@@ -23,5 +27,8 @@ __all__ = [
     'SequenceEvent',
     'MusicalContext',
     'HardwareDevice',
-    'HardwareDeviceManager'
+    'HardwareDeviceManager',
+    
+    # WebSocket client API
+    'ShepherdBackendControllerApp'
 ]

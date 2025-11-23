@@ -3,6 +3,7 @@ README.md
 setup.py
 pyshepherd/__init__.py
 pyshepherd/__main__.py
+pyshepherd/client.py
 pyshepherd/pyshepherd.py
 pyshepherd/state_debugger.py
 pyshepherd/state_synchronizer.py

@@ -5,6 +5,7 @@ Requires-Python: >=3.8
 License-File: LICENSE
 Requires-Dist: mido>=1.2.10
 Requires-Dist: websockets>=10.0
+Requires-Dist: websocket-client>=1.0.0
 Provides-Extra: test
 Requires-Dist: pytest>=7.0.0; extra == "test"
 Requires-Dist: pytest-cov>=4.0.0; extra == "test"

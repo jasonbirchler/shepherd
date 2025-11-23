@@ -1,5 +1,5 @@
-import pytest
 from unittest.mock import Mock, patch
+import pytest
 
 
 @pytest.fixture
@@ -65,5 +65,10 @@ def mock_track():
 @pytest.fixture(autouse=True)
 def disable_websocket():
     """Disable WebSocket server for all tests by default"""
-    with patch('pyshepherd.server.websocket_server.WebSocketServer'):
+    try:
+        # Try to patch at the module level where it's actually imported
+        with patch('pyshepherd.server.websocket_server.WebSocketServer'):
+            yield
+    except (ImportError, AttributeError):
+        # If server module can't be imported, skip the patch
         yield

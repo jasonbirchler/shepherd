@@ -7,6 +7,7 @@ setup(
     install_requires=[
         "mido>=1.2.10",
         "websockets>=10.0",
+        "websocket-client>=1.0.0",
     ],
     extras_require={
         "test": [

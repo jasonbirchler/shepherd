@@ -6,13 +6,14 @@ import time
 import traceback
 import sys
 
+from collections import defaultdict
+
 import cairo
 import definitions
 import mido
 import numpy
 import push2_python
 
-from collections import defaultdict
 
 from modes.melodic_mode import MelodicMode
 from modes.track_selection_mode import TrackSelectionMode
@@ -26,10 +27,10 @@ from modes.midi_cc_mode import MIDICCMode
 from modes.preset_selection_mode import PresetSelectionMode
 from modes.ddrm_tone_selector_mode import DDRMToneSelectorMode
 from utils import show_notification
+from pyshepherd.pyshepherd import ShepherdBackendControllerApp
 
 # Add parent directory to python path and import pyshepherd
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from pyshepherd.pyshepherd import ShepherdBackendControllerApp
 
 
 class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
@@ -87,6 +88,8 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
 
         # Start shepherd interface (do that by calling the super class method)
         super().__init__(*args, **kwargs)
+        # Set shepherd_interface to self so we can access inherited state attribute
+        self.shepherd_interface = self
 
         # NOTE: app modes will be initialized once first state has been received
 
@@ -98,8 +101,16 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
         return settings
 
     def on_full_state_received(self):
+        print(f"on_full_state_received called - modes_initialized: {self.modes_initialized}")
         if not self.modes_initialized:
-            self.init_modes(self.load_settings_from_file())
+            print("Initializing modes...")
+            try:
+                self.init_modes(self.load_settings_from_file())
+                print(f"Modes initialized successfully: {self.modes_initialized}")
+            except Exception as e:
+                print(f"Error during mode initialization: {e}")
+                import traceback
+                traceback.print_exc()
         else:
             self.active_modes_need_reactivate = True
             self.pads_need_update = True  # Force pad update after modes are initialized
@@ -110,8 +121,8 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
         self.notes_midi_in = None
 
     def on_state_update_received(self, update_data):
-        if self.shepherd_interface.state is None or not self.modes_initialized: return
-
+        if self.shepherd_interface.state is None or not self.modes_initialized: 
+            return
         # Check if playhead is changing while doing count in, and show notification message
         if update_data['updateType'] == 'propertyChanged':
             property_name = update_data['propertyName']
@@ -378,19 +389,67 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
             mode.update_buttons()
 
     def update_push2_display(self):
-        if self.shepherd_interface.state is None or not self.modes_initialized: return
-        if self.use_push2_display:
+        # Debug: Check initial conditions
+        if not hasattr(self, '_display_debug_counter'):
+            self._display_debug_counter = 0
+            self._last_debug_time = time.time()
+        
+        # Check if we can display (state must be loaded and modes initialized)
+        if self.shepherd_interface is None or self.shepherd_interface.state is None or not self.modes_initialized:
+            # Debug: Print condition failure reason occasionally
+            if self._display_debug_counter % 300 == 0:  # Every 5 seconds at 60fps
+                print(f"Display update skipped - shepherd_interface: {self.shepherd_interface is not None}, "
+                      f"state: {self.shepherd_interface.state is not None if self.shepherd_interface else 'N/A'}, "
+                      f"modes_initialized: {self.modes_initialized}")
+            return
+        
+        # Check if display is enabled
+        if not self.use_push2_display:
+            return
+            
+        # Check if push object is available
+        if self.push is None:
+            return
+            
+        try:
+            # Debug: Log successful condition check occasionally
+            if self._display_debug_counter % 300 == 0:
+                print(f"Display update proceeding - active_modes: {len(self.active_modes)}, "
+                      f"use_push2_display: {self.use_push2_display}")
+            
             # Prepare cairo canvas
             w, h = push2_python.constants.DISPLAY_LINE_PIXELS, push2_python.constants.DISPLAY_N_LINES
             surface = cairo.ImageSurface(cairo.FORMAT_RGB16_565, w, h)
             ctx = cairo.Context(surface)
+            
+            # Clear surface with black background to prevent garbage data from showing
+            ctx.set_source_rgb(0, 0, 0)  # Black background
+            ctx.rectangle(0, 0, w, h)
+            ctx.fill()
 
             # Call all active modes to write to context
+            modes_updated = 0
             for mode in self.active_modes:
-                mode.update_display(ctx, w, h)
+                try:
+                    mode.update_display(ctx, w, h)
+                    modes_updated += 1
+                except Exception as e:
+                    print(f"Error updating display for mode {mode}: {e}")
+                    import traceback
+                    traceback.print_exc()
+
+            # Debug: Log that test pattern was drawn
+            if self._display_debug_counter % 300 == 0:
+                print("Test pattern drawn - white rectangle at (10,10)")
+
+            # Debug: Log modes update status occasionally
+            if self._display_debug_counter % 300 == 0:
+                print(f"Updated display for {modes_updated}/{len(self.active_modes)} modes")
 
             # Show any notifications that should be shown
-            if self.notification_text is not None:
+            if hasattr(self, 'notification_text') and self.notification_text is not None:
+                if not hasattr(self, 'notification_time'):
+                    self.notification_time = time.time()
                 time_since_notification_started = time.time() - self.notification_time
                 if time_since_notification_started < definitions.NOTIFICATION_TIME:
                     show_notification(ctx, self.notification_text,
@@ -402,6 +461,19 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
             buf = surface.get_data()
             frame = numpy.ndarray(shape=(h, w), dtype=numpy.uint16, buffer=buf).transpose()
             self.push.display.display_frame(frame, input_format=push2_python.constants.FRAME_FORMAT_RGB565)
+            
+            # Debug: Log successful display update occasionally
+            if self._display_debug_counter % 300 == 0:
+                print("Display frame sent successfully")
+                
+        except Exception as e:
+            print(f"Error updating Push2 display: {e}")
+            import traceback
+            traceback.print_exc()
+            # Don't let display errors crash the main loop
+        
+        # Increment debug counter
+        self._display_debug_counter += 1
 
     def check_for_delayed_actions(self):
         if self.shepherd_interface.state is None or not self.modes_initialized: return
@@ -471,38 +543,38 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
 
         except KeyboardInterrupt:
             print('Exiting ShepherdController...')
-            self.push.f_stop.set()
+            if self.push:
+                self.push.f_stop.set()
 
     def on_midi_push_connection_established(self):
         # Do initial configuration of Push
         print('Doing initial Push config...')
 
         # Configure custom color palette
-        app.push.color_palette = {}
+        app_instance.push.color_palette = {}
         for count, color_name in enumerate(definitions.COLORS_NAMES):
-            app.push.set_color_palette_entry(count, [color_name, color_name],
+            app_instance.push.set_color_palette_entry(count, [color_name, color_name],
                                              rgb=definitions.get_color_rgb_float(color_name), allow_overwrite=True)
-        app.push.reapply_color_palette()
+        app_instance.push.reapply_color_palette()
 
         # Initialize all buttons to black, initialize all pads to off
-        app.push.buttons.set_all_buttons_color(color=definitions.BLACK)
-        app.push.pads.set_all_pads_to_color(color=definitions.BLACK)
+        app_instance.push.buttons.set_all_buttons_color(color=definitions.BLACK)
+        app_instance.push.pads.set_all_pads_to_color(color=definitions.BLACK)
 
-        if app.shepherd_interface.state is not None:
+        if app_instance.shepherd_interface.state is not None:
             # Iterate over modes and (re-)activate them
             for mode in self.active_modes:
                 mode.activate()
 
             # Update buttons and pads (just in case something was missing!)
-            app.update_push2_buttons()
-            app.update_push2_pads()
+            app_instance.update_push2_buttons()
+            app_instance.update_push2_pads()
 
     def is_button_being_pressed(self, button_name):
-        global buttons_pressed_state
         return buttons_pressed_state.get(button_name, False)
 
     def set_button_ignore_next_action_if_not_yet_triggered(self, button_name):
-        global buttons_should_ignore_next_release_action, buttons_waiting_to_trigger_processed_action
+        global buttons_should_ignore_next_release_action
         if buttons_waiting_to_trigger_processed_action.get(button_name, False):
             buttons_should_ignore_next_release_action[button_name] = True
 
@@ -524,9 +596,9 @@ class ShepherdPush2ControllerApp(ShepherdBackendControllerApp):
 # Bind push action handlers with class methods
 @push2_python.on_encoder_rotated()
 def on_encoder_rotated(_, encoder_name, increment):
-    if app.shepherd_interface.state is None: return
+    if app_instance.shepherd_interface.state is None: return
     try:
-        for mode in app.active_modes[::-1]:
+        for mode in app_instance.active_modes[::-1]:
             action_performed = mode.on_encoder_rotated(encoder_name, increment)
             if action_performed:
                 break  # If mode took action, stop event propagation
@@ -544,26 +616,26 @@ pads_last_pressed_veocity = {}
 
 @push2_python.on_pad_pressed()
 def on_pad_pressed(_, pad_n, pad_ij, velocity):
-    if app.shepherd_interface.state is None: return
+    if app_instance.shepherd_interface.state is None: return
     global pads_pressing_log, pads_timers, pads_pressed_state, pads_should_ignore_next_release_action
 
     # - Send MIDI to monitored tracks for melodic, rhythmic, or slice modes
     active_pad_mode = None
-    if app.is_mode_active(app.melodic_mode):
-        active_pad_mode = app.melodic_mode
-    elif app.is_mode_active(app.rhyhtmic_mode):
-        active_pad_mode = app.rhyhtmic_mode
-    elif app.is_mode_active(app.slice_notes_mode):
-        active_pad_mode = app.slice_notes_mode
+    if app_instance.is_mode_active(app_instance.melodic_mode):
+        active_pad_mode = app_instance.melodic_mode
+    elif app_instance.is_mode_active(app_instance.rhyhtmic_mode):
+        active_pad_mode = app_instance.rhyhtmic_mode
+    elif app_instance.is_mode_active(app_instance.slice_notes_mode):
+        active_pad_mode = app_instance.slice_notes_mode
     
     if active_pad_mode is not None:
         note = active_pad_mode.pad_ij_to_midi_note(pad_ij)
         if note is not None:
-            app.send_pad_midi_to_monitored_tracks(note, velocity, note_on=True)
+            app_instance.send_pad_midi_to_monitored_tracks(note, velocity, note_on=True)
 
     # - Trigger raw pad pressed action
     try:
-        for mode in app.active_modes[::-1]:
+        for mode in app_instance.active_modes[::-1]:
             action_performed = mode.on_pad_pressed_raw(pad_n, pad_ij, velocity)
             if action_performed:
                 break  # If mode took action, stop event propagation
@@ -579,7 +651,7 @@ def on_pad_pressed(_, pad_n, pad_ij, velocity):
         if pads_pressed_state.get(pad_n, False):
             # If pad has not been released, trigger the long press action
             try:
-                for mode in app.active_modes[::-1]:
+                for mode in app_instance.active_modes[::-1]:
                     action_performed = mode.on_pad_pressed(pad_n, pad_ij, velocity, long_press=True,
                                                            shift=buttons_pressed_state.get(
                                                                push2_python.constants.BUTTON_SHIFT, False),
@@ -614,26 +686,26 @@ def on_pad_pressed(_, pad_n, pad_ij, velocity):
 
 @push2_python.on_pad_released()
 def on_pad_released(_, pad_n, pad_ij, velocity):
-    if app.shepherd_interface.state is None: return
+    if app_instance.shepherd_interface.state is None: return
     global pads_pressing_log, pads_timers, pads_pressed_state, pads_should_ignore_next_release_action
 
     # - Send MIDI note off to monitored tracks for melodic, rhythmic, or slice modes
     active_pad_mode = None
-    if app.is_mode_active(app.melodic_mode):
-        active_pad_mode = app.melodic_mode
-    elif app.is_mode_active(app.rhyhtmic_mode):
-        active_pad_mode = app.rhyhtmic_mode
-    elif app.is_mode_active(app.slice_notes_mode):
-        active_pad_mode = app.slice_notes_mode
+    if app_instance.is_mode_active(app_instance.melodic_mode):
+        active_pad_mode = app_instance.melodic_mode
+    elif app_instance.is_mode_active(app_instance.rhyhtmic_mode):
+        active_pad_mode = app_instance.rhyhtmic_mode
+    elif app_instance.is_mode_active(app_instance.slice_notes_mode):
+        active_pad_mode = app_instance.slice_notes_mode
     
     if active_pad_mode is not None:
         note = active_pad_mode.pad_ij_to_midi_note(pad_ij)
         if note is not None:
-            app.send_pad_midi_to_monitored_tracks(note, velocity, note_on=False)
+            app_instance.send_pad_midi_to_monitored_tracks(note, velocity, note_on=False)
 
     # - Trigger raw pad released action
     try:
-        for mode in app.active_modes[::-1]:
+        for mode in app_instance.active_modes[::-1]:
             action_performed = mode.on_pad_released_raw(pad_n, pad_ij, velocity)
             if action_performed:
                 break  # If mode took action, stop event propagation
@@ -651,7 +723,7 @@ def on_pad_released(_, pad_n, pad_ij, velocity):
         if last_time_pressed - previous_time_pressed < definitions.BUTTON_DOUBLE_PRESS_TIME:
             # If time between last 2 pressings is shorter than BUTTON_DOUBLE_PRESS_TIME, trigger double press action
             try:
-                for mode in app.active_modes[::-1]:
+                for mode in app_instance.active_modes[::-1]:
                     action_performed = mode.on_pad_pressed(pad_n, pad_ij, velocity, double_press=True,
                                                            shift=buttons_pressed_state.get(
                                                                push2_python.constants.BUTTON_SHIFT, False),
@@ -664,7 +736,7 @@ def on_pad_released(_, pad_n, pad_ij, velocity):
                 traceback.print_exc()
         else:
             try:
-                for mode in app.active_modes[::-1]:
+                for mode in app_instance.active_modes[::-1]:
                     action_performed = mode.on_pad_pressed(pad_n, pad_ij, velocity,
                                                            shift=buttons_pressed_state.get(
                                                                push2_python.constants.BUTTON_SHIFT, False),
@@ -695,9 +767,9 @@ def on_pad_released(_, pad_n, pad_ij, velocity):
 
 @push2_python.on_pad_aftertouch()
 def on_pad_aftertouch(_, pad_n, pad_ij, velocity):
-    if app.shepherd_interface.state is None: return
+    if app_instance.shepherd_interface.state is None: return
     try:
-        for mode in app.active_modes[::-1]:
+        for mode in app_instance.active_modes[::-1]:
             action_performed = mode.on_pad_aftertouch(pad_n, pad_ij, velocity)
             if action_performed:
                 break  # If mode took action, stop event propagation
@@ -715,12 +787,12 @@ buttons_waiting_to_trigger_processed_action = {}
 
 @push2_python.on_button_pressed()
 def on_button_pressed(_, name):
-    if app.shepherd_interface.state is None: return
+    if app_instance.shepherd_interface.state is None: return
     global buttons_pressing_log, buttons_timers, buttons_pressed_state, buttons_should_ignore_next_release_action, buttons_waiting_to_trigger_processed_action
 
     # - Trigger raw button pressed action
     try:
-        for mode in app.active_modes[::-1]:
+        for mode in app_instance.active_modes[::-1]:
             action_performed = mode.on_button_pressed_raw(name)
             mode.set_buttons_need_update_if_button_used(name)
             if action_performed:
@@ -739,7 +811,7 @@ def on_button_pressed(_, name):
         if buttons_pressed_state.get(name, False):
             # If button has not been released, trigger the long press action
             try:
-                for mode in app.active_modes[::-1]:
+                for mode in app_instance.active_modes[::-1]:
                     action_performed = mode.on_button_pressed(name, long_press=True,
                                                               shift=buttons_pressed_state.get(
                                                                   push2_python.constants.BUTTON_SHIFT, False),
@@ -773,12 +845,12 @@ def on_button_pressed(_, name):
 
 @push2_python.on_button_released()
 def on_button_released(_, name):
-    if app.shepherd_interface.state is None: return
+    if app_instance.shepherd_interface.state is None: return
     global buttons_pressing_log, buttons_timers, buttons_pressed_state, buttons_should_ignore_next_release_action, buttons_waiting_to_trigger_processed_action
 
     # - Trigger raw button released action
     try:
-        for mode in app.active_modes[::-1]:
+        for mode in app_instance.active_modes[::-1]:
             action_performed = mode.on_button_released_raw(name)
             mode.set_buttons_need_update_if_button_used(name)
             if action_performed:
@@ -797,7 +869,7 @@ def on_button_released(_, name):
         if last_time_pressed - previous_time_pressed < definitions.BUTTON_DOUBLE_PRESS_TIME:
             # If time between last 2 pressings is shorter than BUTTON_DOUBLE_PRESS_TIME, trigger double press action
             try:
-                for mode in app.active_modes[::-1]:
+                for mode in app_instance.active_modes[::-1]:
                     action_performed = mode.on_button_pressed(name, double_press=True,
                                                               shift=buttons_pressed_state.get(
                                                                   push2_python.constants.BUTTON_SHIFT, False),
@@ -812,7 +884,7 @@ def on_button_released(_, name):
                 traceback.print_exc()
         else:
             try:
-                for mode in app.active_modes[::-1]:
+                for mode in app_instance.active_modes[::-1]:
                     action_performed = mode.on_button_pressed(name,
                                                               shift=buttons_pressed_state.get(
                                                                   push2_python.constants.BUTTON_SHIFT, False),
@@ -843,9 +915,9 @@ def on_button_released(_, name):
 
 @push2_python.on_touchstrip()
 def on_touchstrip(_, value):
-    if app.shepherd_interface.state is None: return
+    if app_instance.shepherd_interface.state is None: return
     try:
-        for mode in app.active_modes[::-1]:
+        for mode in app_instance.active_modes[::-1]:
             action_performed = mode.on_touchstrip(value)
             if action_performed:
                 break  # If mode took action, stop event propagation
@@ -856,9 +928,9 @@ def on_touchstrip(_, value):
 
 @push2_python.on_sustain_pedal()
 def on_sustain_pedal(_, sustain_on):
-    if app.shepherd_interface.state is None: return
+    if app_instance.shepherd_interface.state is None: return
     try:
-        for mode in app.active_modes[::-1]:
+        for mode in app_instance.active_modes[::-1]:
             action_performed = mode.on_sustain_pedal(sustain_on)
             if action_performed:
                 break  # If mode took action, stop event propagation
@@ -870,17 +942,17 @@ def on_sustain_pedal(_, sustain_on):
 midi_connected_received_before_app = False
 
 
-@push2_python.on_midi_connected()
-def on_midi_connected(_):
-    try:
-        app.on_midi_push_connection_established()
-    except NameError as e:
-        global midi_connected_received_before_app
-        midi_connected_received_before_app = True
-        print('Error:  {}'.format(str(e)))
-        traceback.print_exc()
+# Global app instance for callback functions
 
-
+# Run app main loop
+if __name__ == "__main__":
+    global app_instance
+    app_instance = ShepherdPush2ControllerApp()
+    if midi_connected_received_before_app:
+        # App received the "on_midi_connected" call before it was initialized. Do it now!
+        print('Missed MIDI initialization call, doing it now...')
+        app_instance.on_midi_push_connection_established()
+    app_instance.run_loop()
 # Run app main loop
 if __name__ == "__main__":
     app = ShepherdPush2ControllerApp()

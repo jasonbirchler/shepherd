@@ -288,13 +288,13 @@ class ClipEditMode(definitions.ShepherdControllerMode):
             # For all modes, slots 6-8 show clip preview
             if self.mode != self.MODE_GENERATOR or (self.mode == self.MODE_GENERATOR and len(self.generator_algorithm.get_algorithm_parameters()) <= 3):
                 if self.clip.clip_length_in_beats > 0.0:
-                    highglight_notes_beat_frame = (
+                    highlight_notes_beat_frame = (
                         self.pads_min_note_offset,
                         self.pads_min_note_offset + 8,
                         self.pads_pad_beats_offset,
                         self.pads_pad_beats_offset + 8 * self.pads_pad_beat_scale
                     )
-                    draw_clip(ctx, self.clip, frame=(5.0/8.0, 0.0, 3.0/8.0, 0.87), highglight_notes_beat_frame=highglight_notes_beat_frame, event_color=track_color + '_darker1', highlight_color=track_color)
+                    draw_clip(ctx, self.clip, frame=(5.0/8.0, 0.0, 3.0/8.0, 0.87), highlight_notes_beat_frame=highlight_notes_beat_frame, event_color=track_color + '_darker1', highlight_color=track_color)
                 
             beas_to_pad = self.beats_to_pad(self.clip.playhead_position_in_beats)
             if 0 <= beas_to_pad <= 7 and beas_to_pad is not self.last_beats_to_pad:

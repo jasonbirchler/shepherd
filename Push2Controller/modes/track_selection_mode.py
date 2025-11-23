@@ -1,7 +1,7 @@
-import definitions
-import push2_python
 import os
 import json
+import definitions
+import push2_python
 
 from utils import show_text
 
@@ -57,10 +57,16 @@ class TrackSelectionMode(definitions.ShepherdControllerMode):
         return list(set([track.output_hardware_device_name for track in self.session.tracks]))
 
     def get_current_track_device_info(self):
-        return self.devices_info.get(self.get_selected_track().output_hardware_device_name, {})
+        track = self.get_selected_track()
+        if track is None:
+            return {}
+        return self.devices_info.get(track.output_hardware_device_name, {})
 
     def get_current_track_device_short_name(self):
-        return self.get_selected_track().output_hardware_device_name
+        track = self.get_selected_track()
+        if track is None:
+            return ""  # Return empty string when no track selected
+        return track.output_hardware_device_name
     
     def get_track_color(self, track: pyshepherd.pyshepherd.Track):
         try:
@@ -70,7 +76,10 @@ class TrackSelectionMode(definitions.ShepherdControllerMode):
         return definitions.COLORS_NAMES[track_idx % 8]
     
     def get_current_track_color(self):
-        return self.get_track_color(self.get_selected_track())
+        track = self.get_selected_track()
+        if track is None:
+            return definitions.BLACK  # Return black when no track selected
+        return self.get_track_color(track)
 
     def get_current_track_color_rgb(self):
         return definitions.get_color_rgb_float(self.get_current_track_color())
@@ -133,8 +142,13 @@ class TrackSelectionMode(definitions.ShepherdControllerMode):
             self.app.buttons_need_update = True
             return
         for count, name in enumerate(self.track_button_names):
-            color = self.get_track_color(self.session.tracks[count])
-            self.push.buttons.set_button_color(name, color)
+            # Only process tracks that actually exist
+            if count < len(self.session.tracks):
+                color = self.get_track_color(self.session.tracks[count])
+                self.push.buttons.set_button_color(name, color)
+            else:
+                # Set unused track buttons to black
+                self.push.buttons.set_button_color(name, definitions.BLACK)
             
     def update_display(self, ctx, w, h):
         if self.session is None or self.session.tracks is None:

@@ -1,8 +1,8 @@
+import threading
+import json
+from typing import Set, TYPE_CHECKING
 import asyncio
 import websockets
-import json
-import threading
-from typing import Set, Dict, Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..backend.sequencer import Sequencer
@@ -53,8 +53,16 @@ class WebSocketServer:
     
     async def _start_server(self):
         """Start the WebSocket server"""
+        async def handler(websocket):
+            # Get path from websocket if available
+            path = getattr(websocket, 'path', '/shepherd_coms')
+            if path == '/shepherd_coms' or path == '/':
+                await self._handle_client(websocket, path)
+            else:
+                await websocket.close()
+        
         self.server = await websockets.serve(
-            self._handle_client,
+            handler,
             self.host,
             self.port
         )
@@ -63,7 +71,7 @@ class WebSocketServer:
         # Keep server running
         await self.server.wait_closed()
     
-    async def _handle_client(self, websocket, path):
+    async def _handle_client(self, websocket, path=None):
         """Handle a new WebSocket client connection"""
         print(f"Client connected: {websocket.remote_address}")
         self.clients.add(websocket)

@@ -1,5 +1,6 @@
 mido>=1.2.10
 websockets>=10.0
+websocket-client>=1.0.0
 
 [test]
 pytest>=7.0.0

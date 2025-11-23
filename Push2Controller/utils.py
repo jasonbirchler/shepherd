@@ -114,7 +114,7 @@ def show_notification(ctx, text, opacity=1.0):
 def draw_clip(ctx, 
               clip,
               frame=(0.0, 0.0, 1.0, 1.0),  # (upper-left corner x, upper-left corner y, width, height)
-              highglight_notes_beat_frame=None,  # (min note, max note, min beat, max_beat)
+              highlight_notes_beat_frame=None,  # (min note, max note, min beat, max_beat)
               event_color=definitions.WHITE, 
               highlight_color=definitions.GREEN, 
               highlight_active_notes=True, 
@@ -131,8 +131,8 @@ def draw_clip(ctx,
     width = display_w * width_percentage
     height = display_h * height_percentage
 
-    if highglight_notes_beat_frame is not None:
-        displaybeatslength = max(clip.clip_length_in_beats, highglight_notes_beat_frame[3])
+    if highlight_notes_beat_frame is not None:
+        displaybeatslength = max(clip.clip_length_in_beats, highlight_notes_beat_frame[3])
     else:
         displaybeatslength = clip.clip_length_in_beats
 
@@ -185,11 +185,11 @@ def draw_clip(ctx,
                 height_rel = note_height / display_h
                 show_rectangle(ctx, x0_rel, y0_rel, width_rel, height_rel, background_color=color, alpha=alpha)
 
-        if highglight_notes_beat_frame is not None:
-            y0 = y/display_h - (((highglight_notes_beat_frame[0] - min_midinote) * note_height))/display_h
-            h = note_height / display_h * (highglight_notes_beat_frame[1] - highglight_notes_beat_frame[0])
-            x0 = xoffset_percentage + highglight_notes_beat_frame[2]/displaybeatslength * width_percentage
-            w = (highglight_notes_beat_frame[3] - highglight_notes_beat_frame[2])/displaybeatslength* width_percentage
+        if highlight_notes_beat_frame is not None:
+            y0 = y/display_h - (((highlight_notes_beat_frame[0] - min_midinote) * note_height))/display_h
+            h = note_height / display_h * (highlight_notes_beat_frame[1] - highlight_notes_beat_frame[0])
+            x0 = xoffset_percentage + highlight_notes_beat_frame[2]/displaybeatslength * width_percentage
+            w = (highlight_notes_beat_frame[3] - highlight_notes_beat_frame[2])/displaybeatslength* width_percentage
             show_rectangle(ctx, x0, y0 - h, w, h, background_color=definitions.WHITE, alpha=0.25)
 
 
